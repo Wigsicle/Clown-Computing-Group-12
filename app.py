@@ -1,7 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+import os
+from db import db
+from auth import auth
 
 app = Flask(__name__)
 app.secret_key = 'anything'
+
+app.register_blueprint(auth)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:db123@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
+app.config
+
+db.init_app(app)
+from models import User, Event, Ticket
 
 # Route for the homepage
 @app.route('/')

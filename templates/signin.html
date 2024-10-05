@@ -32,20 +32,20 @@
 
 <body>
     <div>
-        <form class="w-100" style="max-width: 400px;">
+        <form action="{{ url_for('auth.signin') }}" method="POST" class="w-100" style="max-width: 400px;">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="email" class="form-control" id="username">
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control" id="email">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" class="form-control" id="password">
+                <input type="password" name="password" class="form-control" id="password">
             </div>
             <div class="form-group form-check">
                 <input type="checkbox" class="form-check-input" id="check">
                 <label class="form-check-label" for="check">Remember me</label>
             </div>
-            <a href="/event_list"><button type="button" class="btn btn-primary">Sign In</button></a>
+            <button type="submit" class="btn btn-primary">Sign In</button>
         </form>
     </div>
 </body>
