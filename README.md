@@ -13,9 +13,11 @@ Please install the following packages or libraries
     ```
 
 2. DB lib
+    ```
     pip install Flask-SQLAlchemy
     pip install mysqlclient
     pip install mysql-connector-python
+    ```
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://<yourusername>:<yourpassword>@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
 
