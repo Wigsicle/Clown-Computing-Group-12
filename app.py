@@ -2,12 +2,18 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import os
 from db import db
 from auth import auth
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DB_USER = os.getenv('DB_USERNAME')
+DB_PASS = os.getenv('DB_PASSWORD')
 
 app = Flask(__name__)
 app.secret_key = 'anything'
 
 app.register_blueprint(auth)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:db123@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + DB_USER + ':' + DB_PASS + '@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
 app.config
 
 db.init_app(app)
