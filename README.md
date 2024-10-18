@@ -19,9 +19,9 @@ pip install -r requirements.txt
 
 ### Run the Flask-Migrate Schema migration script
 3. Initilise the migrations folder into your program, only do this if you DO NOT have the migrations/ folder in your flask app directory
-``` 
-flask db init 
-```
+    ``` 
+    flask db init 
+    ```
 4.  Update the migrations folder with the latest models changes and push the schema changes to your database
     ``` 
     flask db migrate -m "initial migration"
