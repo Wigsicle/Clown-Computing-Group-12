@@ -1,5 +1,5 @@
 from app import app, db
-from models import User, Event, Ticket
+from models import User, Event, Ticket, Ticket_Listing
 
 # Create all tables inside an application context
 with app.app_context():
