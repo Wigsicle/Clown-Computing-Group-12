@@ -1754,6 +1754,15 @@ Tickets Page
   margin-bottom: 100px;
 }
 
+.tickets-page .heading-tabs {
+  padding: 20px 0px;
+  border-bottom: 1px dotted #d7dadc;
+}
+
+.tickets-page .heading-tabs .main-dark-button {
+  text-align: right;
+}
+
 .tickets-page .search-box {
   background-color: #7c838b;
   padding: 30px;

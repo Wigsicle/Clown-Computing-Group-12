@@ -25,13 +25,6 @@ def signup():
     
     return render_template('signin.html')
 
-# Route for the event management page for event organizer 
-# CRUD events
-@app.route('/event_management')
-def eventmanagement():
-    
-    return render_template('event_management.html')
-
 # Route for the event list page for users
 # User able to buy event ticket, resale ticket and sell tickets
 @app.route('/event_list')
@@ -44,6 +37,12 @@ def eventlist():
 def eventdetails():
     
     return render_template('event_details.html')
+
+# Route for event details page
+@app.route('/ticket_transaction_history')
+def tickettranscationhistory():
+    
+    return render_template('ticket_transaction_history.html')
 
 # Route for the ticket inventory page
 # List of user purchased ticket
