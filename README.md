@@ -30,6 +30,11 @@ pip install -r requirements.txt
 Whenever the models.py file gets updated, steps 4 will need to be rerun.
 Sometimes, you may get a "target database out of date error". To fix this, run ``` flask db stamp head ``` then run step 4. 
 
+### Run the Database Dummy Data Insertion Script
+5. Run insert_script.py in dummy_insert folder
+
+In the event that you need to change the data, just change the respective table csv files.
+
 ### Running the script ("OLD, MIGHT WORK, MAYBE." - DAN)
 Once everything done, run the 'create_db.py' script to create the models, but you need to create a schema in your mysql host first "ticket_hive"
 

@@ -2,5 +2,3 @@ event_id,event_name,event_datetime,location,description,event_image
 1,"Rock Concert",2024-06-15 19:00:00,Stadium A,"An electrifying evening with top rock bands","images/rock_concert.jpg"
 2,"Jazz Night",2024-07-20 10:00:00,Gallery B,"A smooth night filled with live jazz performances","images/art_exhibition.jpg"
 3,"Pop Festival",2024-08-30 09:00:00,Convention Center C,"A vibrant festival featuring popular pop artists","images/tech_conference.jpg"
-
-INSERT into ticket_hive.event (event_id,event_name,event_datetime,location,description,event_image) VALUES ('1','Rock Concert','2024-06-15 19:00:00','Stadium A','An electrifying evening with top rock bands','images/rock_concert.jpg'),('2','Jazz Night','2024-07-20 10:00:00','Gallery B','A smooth night filled with live jazz performances','images/art_exhibition.jpg'),('3','Pop Festival','2024-08-30 09:00:00','Convention Center C','A vibrant festival featuring popular pop artists','images/tech_conference.jpg');

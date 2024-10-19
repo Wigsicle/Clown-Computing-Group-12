@@ -1,4 +1,3 @@
-sv
 listing_id,sale_price_cents,status,seller_id,buyer_id,ticket_id,listed_on,sold_on
 1,6718,Available,1,2,18,2024-05-20 21:41:23,2024-05-21 08:00:42
 2,2760,Purchased,3,2,3,2024-02-03 13:55:39,2024-10-25 21:41:16
