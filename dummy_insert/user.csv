@@ -1,0 +1,6 @@
+user_id,email,password,user_type,first_name,last_name
+1,yongweifarm@gmail.com,12345,normal,Yong Wei,Farm
+2,richardpeters@gmail.com,12345,normal,Richard,Aksarachai
+3,stephen@gmail.com,12345,admin,Stephen,Seah
+4,daniel@gmail.com,aaaaa,normal,Daniel,Lip
+5,jyk@gmail.com,bbbbb,normal,Jun Ye,Khoo
