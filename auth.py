@@ -11,19 +11,26 @@ def signin():
         email = request.form.get('email')
         password = request.form.get('password')
         
+        print(f"Form submitted with email: {email}, password: {password}")
+        
         user = User.query.filter_by(email=email).first()
+        
+        if user:
+            print(f"User found: {user.email}")
+        else:
+            print(f"User not found with email: {email}")
         
         if user and user.password == password:
             session['user'] = user.email
             
-            if user.user_type == "customer":
+            if user.user_type == "normal":
                 return redirect(url_for('eventlist'))
-            elif user.user_type == "organizer":
+            elif user.user_type == "admin":
                 return redirect(url_for('eventmanagement'))
             else:
                 return redirect(url_for('auth.signin'))
         else:
             flash('Invalid email or password')
-            redirect(url_for('auth.signin'))
+            return redirect(url_for('auth.signin'))
             
     return render_template('signin.html')
