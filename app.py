@@ -73,5 +73,11 @@ def sellticket2():
     
     return render_template('ticket_sell2.html')
 
+# Route for browsing resale tickets
+@app.route('/resale_market')
+def resale_market():
+    # You can add any necessary logic here, e.g., fetching tickets from the database
+    return render_template('resale_market.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
