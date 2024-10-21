@@ -26,7 +26,7 @@ def signin():
             if user.user_type == "normal":
                 return redirect(url_for('eventlist'))
             elif user.user_type == "admin":
-                return redirect(url_for('eventmanagement'))
+                return redirect(url_for('ticketinventory'))
             else:
                 return redirect(url_for('auth.signin'))
         else:
