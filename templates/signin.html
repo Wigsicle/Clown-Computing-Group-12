@@ -8,7 +8,7 @@
     <meta name="author" content="Tooplate">
     <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" rel="stylesheet">
 
-    <title>TicketHive - Sign Up</title>
+    <title>TicketHive - Sign In</title>
 
     <link rel="shortcut icon" type="image/icon" href="static/images/logo.png" />
 
@@ -46,6 +46,17 @@
                 <label class="form-check-label" for="check">Remember me</label>
             </div>
             <button type="submit" class="btn btn-primary">Sign In</button>
+
+            <!-- Display flash messages (errors, success) -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                {% endwith %}
         </form>
     </div>
 </body>

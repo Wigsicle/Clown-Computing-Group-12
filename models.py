@@ -15,8 +15,8 @@ class User(db.Model):
     last_name:Mapped[str] = mapped_column(String(50), nullable=False)
     
     tickets_owned:Mapped[list['Ticket']] = relationship('Ticket', back_populates="owner", lazy=True)
-    ticket_sell_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', back_populates="seller")
-    ticket_buy_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', back_populates="buyer") # back populates off listing rs
+    ticket_sell_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.seller_id', back_populates="seller")
+    ticket_buy_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.buyer_id', back_populates="buyer") # back populates off listing rs
 
 class Event(db.Model):
     """Event class contains the details of the event."""
