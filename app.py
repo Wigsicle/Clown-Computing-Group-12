@@ -62,6 +62,11 @@ def ticketinventory():
     
     return render_template('ticket_inventory.html')
 
+@app.route('/transactions')
+def usertransactions():
+    
+    return render_template('user_transaction_history.html')
+
 # Route for ticket selling page
 @app.route('/sell_ticket_1')
 def sellticket1():

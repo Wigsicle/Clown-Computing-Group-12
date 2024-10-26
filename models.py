@@ -57,7 +57,7 @@ class Ticket_Listing(db.Model):
     __tablename__ = 'ticket_listing'
     listing_id:Mapped[int] = mapped_column(Integer, primary_key=True)
     sale_price_cents:Mapped[int] = mapped_column(Integer, nullable=False, default='0') # divide this value by 100 when displaying so you don't get weird rounding errors
-    status:Mapped[str] = mapped_column(String(50), nullable=False, default='Available') # status of ticket listing: Available/Sold/Reserved?/Removed
+    status:Mapped[str] = mapped_column(String(50), nullable=False, default='Available') # status of ticket listing: Available/Sold
     listed_on:Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now()) # tracks when the ticket was put up for sale
     sold_on:Mapped[datetime] = mapped_column(DateTime, nullable=True) # tracks when the listing was sold
 
