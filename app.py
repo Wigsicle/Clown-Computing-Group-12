@@ -4,6 +4,7 @@ import os
 from db import db
 from auth import auth
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -15,6 +16,8 @@ DB_PASS = os.getenv('DB_PASSWORD')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+app.config['SESSION_PERMANENT'] = True
 
 app.register_blueprint(auth)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + DB_USER + ':' + DB_PASS + '@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
@@ -40,8 +43,9 @@ def signin():
 # User able to buy event ticket, resale ticket and sell tickets
 @app.route('/event_list')
 def eventlist():
+    user_email = session.get('user')
     
-    return render_template('event_list.html')
+    return render_template('event_list.html', user_email=user_email)
 
 # Route for event details page
 @app.route('/event_details')
@@ -51,7 +55,7 @@ def eventdetails():
 
 # Route for event details page
 @app.route('/ticket_transaction_history')
-def tickettranscationhistory():
+def tickettransactionhistory():
     
     return render_template('ticket_transaction_history.html')
 
@@ -60,7 +64,16 @@ def tickettranscationhistory():
 @app.route('/ticket_inventory')
 def ticketinventory():
     
-    return render_template('ticket_inventory.html')
+    user_email = session.get('user')
+    user_type = session.get('user_type')
+    
+    if not user_email:
+        return redirect(url_for('auth.signin'))
+    
+    if user_type != 'admin':
+        return redirect(url_for('eventlist'))
+    
+    return render_template('ticket_inventory.html', user_email=user_email, user_type=user_type)
 
 # Route for ticket selling page
 @app.route('/sell_ticket_1')
@@ -77,7 +90,9 @@ def sellticket2():
 @app.route('/resale_market')
 def resale_market():
     # You can add any necessary logic here, e.g., fetching tickets from the database
-    return render_template('resale_market.html')
+    user_email = session.get('user')
+    
+    return render_template('resale_market.html', user_email=user_email)
 
 if __name__ == '__main__':
     app.run(debug=True)
