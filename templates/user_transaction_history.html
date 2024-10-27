@@ -21,21 +21,22 @@
         <link rel="stylesheet" href="static/css/tooplate-artxibition.css">
     </head>
     <body>
-        <!-- ***** Preloader Start ***** -->
+
+    <!-- ***** Preloader Start ***** -->
     <div id="js-preloader" class="js-preloader">
         <div class="preloader-inner">
-          <span class="dot"></span>
-          <div class="dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+            <span class="dot"></span>
+            <div class="dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
-      </div>
-      <!-- ***** Preloader End ***** -->
+    </div>
+    <!-- ***** Preloader End ***** -->
       
-      <!-- ***** Header Area Start ***** -->
-      <header class="header-area header-sticky">
+    <!-- ***** Header Area Start ***** -->
+    <header class="header-area header-sticky">
           <div class="container">
               <div class="row">
                   <div class="col-12">
@@ -58,53 +59,69 @@
                   </div>
               </div>
           </div>
-      </header>
-      <!-- ***** Header Area End ***** -->
+    </header>
+    <!-- ***** Header Area End ***** -->
   
-      <!-- ***** About Us Page ***** -->
-      <div class="page-heading-shows-events">
-          <div class="container">
-              <div class="row">
-                  <div class="col-lg-12">
-                      <h2>Transaction History</h2>
-                  </div>
-              </div>
-          </div>
-      </div>
-
-      <!-- **** Transaction History Section **** -->
-      <div class="container my-4">
-        <h1 class="text-center mb-4">User’s Purchase History</h1>
-        <div class="d-flex justify-content-center mb-4">
-          <button id="boughtTab" class="btn btn-outline-primary mx-2 active-btn" onclick="showTab('bought')">Bought Tickets</button>
-          <button id="soldTab" class="btn btn-outline-primary mx-2" onclick="showTab('sold')">Sold Tickets</button>
+    <!-- ***** About Us Page ***** -->
+    <div class="page-heading-shows-events">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h2>User's Purchase History</h2>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- **** Transaction History Section **** -->
+    <div class="container my-4">
+        <!-- <h1 class="text-center mb-4">User’s Purchase History</h1> -->
+        <!-- <div class="d-flex justify-content-center mb-4">
+            <button id="boughtTab" class="btn btn-outline-primary mx-2 active-btn" onclick="showTab('bought')">Bought Tickets</button>
+            <button id="soldTab" class="btn btn-outline-primary mx-2" onclick="showTab('sold')">Sold Tickets</button>
+        </div> -->
+        <ul class="nav nav-tabs">
+            <li id="buy-nav-item">
+                <a class="nav-link active" onclick="showTab('bought')">Buy History</a>
+            </li>
+            <li id="sell-nav-item">
+                <a class="nav-link" onclick="showTab('sold')">Sell History</a>
+            </li>
+        </ul>
     
         <!-- Bought Tickets Table -->
         <div id="boughtTickets" class="table-responsive">
-          <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-              <tr>
-                <th>Purchase Date</th>
-                <th>Event Name</th>
-                <th>Bought From</th>
-                <th>Sale Price ($)</th>
-              </tr>
-            </thead>
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Purchase Date</th>
+                        <th>Event Name</th>
+                        <th>Bought From</th>
+                        <th>Sale Price ($)</th>
+                    </tr>
+                </thead>
             <tbody>
-              <tr>
-                <td>2024-10-20</td>
-                <td>Concert A</td>
-                <td>User123</td>
-                <td>$50</td>
-              </tr>
-              <tr>
-                <td>2024-09-15</td>
-                <td>Concert B</td>
-                <td>User456</td>
-                <td>$30</td>
-              </tr>
-              <!-- Add more bought tickets as needed -->
+                <tr>
+                    <td>2024-10-20</td>
+                    <td>Concert A</td>
+                    <td>User123</td>
+                    <td>$50</td>
+                </tr>
+                <tr>
+                    <td>2024-09-15</td>
+                    <td>Concert B</td>
+                    <td>User456</td>
+                    <td>$30</td>
+                </tr>
+                <!-- Add more bought tickets as needed -->
+                {% for listing in buyList %}
+                <tr>
+                    <td>{{ listing['date'] }}</td>
+                    <td>{{ listing['name'] }}</td>
+                    <td>{{ listing['seller'] }}</td>
+                    <td>{{ listing['price'] }}</td>
+                </tr>
+                {% endfor %}
             </tbody>
           </table>
         </div>
@@ -140,14 +157,29 @@
     </div>
     
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchBoughtTickets();
+            fetchSoldTickets();
+            console.log("Transaction History Page has retrieved all transaction history for user.");
+        });
+
         function showTab(tab) {
-          // Switch between the Bought and Sold Tickets tabs
-          document.getElementById('boughtTickets').style.display = tab === 'bought' ? 'block' : 'none';
-          document.getElementById('soldTickets').style.display = tab === 'sold' ? 'block' : 'none';
+            // Switch between the Bought and Sold Tickets tabs
+            document.getElementById('boughtTickets').style.display = tab === 'bought' ? 'block' : 'none';
+            document.getElementById('soldTickets').style.display = tab === 'sold' ? 'block' : 'none';
     
-          // Update button styles
-          document.getElementById('boughtTab').classList.toggle('active-btn', tab === 'bought');
-          document.getElementById('soldTab').classList.toggle('active-btn', tab === 'sold');
+            // Update button styles
+            document.getElementById('boughtTab').classList.toggle('active-btn', tab === 'bought');
+            document.getElementById('soldTab').classList.toggle('active-btn', tab === 'sold');
+
+            // Update Navigation Tab Button Style
+            document.getElementById('buy-nav-item').classList.toggle
+        }
+
+        function fetchBoughtTickets() {
+            data.array.forEach(buyListing => {
+                const buyTableRow = document.createElement('tr')
+            });
         }
     </script>
 

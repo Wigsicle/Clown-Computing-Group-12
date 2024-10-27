@@ -64,6 +64,7 @@ def ticketinventory():
 
 @app.route('/transactions')
 def usertransactions():
+    '''Routing for accessing the user transaction page.'''
     
     return render_template('user_transaction_history.html')
 
