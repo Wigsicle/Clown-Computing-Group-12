@@ -4,6 +4,7 @@ import os
 from db import db
 from auth import auth
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -15,6 +16,8 @@ DB_PASS = os.getenv('DB_PASSWORD')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+app.config['SESSION_PERMANENT'] = True
 
 app.register_blueprint(auth)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + DB_USER + ':' + DB_PASS + '@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
@@ -38,20 +41,15 @@ def signin():
 
 # Route for the event list page for users
 # User able to buy event ticket, resale ticket and sell tickets
-@app.route('/event_list')
-def eventlist():
+@app.route('/homepage')
+def homepage():
+    user_email = session.get('user')
     
-    return render_template('event_list.html')
-
-# Route for event details page
-@app.route('/event_details')
-def eventdetails():
-    
-    return render_template('event_details.html')
+    return render_template('homepage.html', user_email=user_email)
 
 # Route for event details page
 @app.route('/ticket_transaction_history')
-def tickettranscationhistory():
+def tickettransactionhistory():
     
     return render_template('ticket_transaction_history.html')
 
@@ -60,30 +58,62 @@ def tickettranscationhistory():
 @app.route('/ticket_inventory')
 def ticketinventory():
     
-    return render_template('ticket_inventory.html')
-
-@app.route('/transactions')
-def usertransactions():
-    '''Routing for accessing the user transaction page.'''
+    user_email = session.get('user')
     
-    return render_template('user_transaction_history.html')
-
-# Route for ticket selling page
-@app.route('/sell_ticket_1')
-def sellticket1():
+    if not user_email:
+        return redirect(url_for('auth.signin'))
     
-    return render_template('ticket_sell1.html')
-
-@app.route('/sell_ticket_2')
-def sellticket2():
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return "User not found", 404  # Handling the case where the user is not found
     
-    return render_template('ticket_sell2.html')
+    # Fetching tickets owned by the user
+    owned_tickets = user.tickets_owned 
+
+    ticket_info = [{
+        "event_name": ticket.event.event_name,
+        "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+        "category": ticket.seat_category,
+        "price": ticket.get_price_str(),
+    } for ticket in owned_tickets]
+
+    return render_template('ticket_inventory.html', tickets=ticket_info, user_email=user_email)
 
 # Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
-    # You can add any necessary logic here, e.g., fetching tickets from the database
-    return render_template('resale_market.html')
+    user_email = session.get('user')
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    if not user_email:
+        return redirect(url_for('auth.signin'))
+    
+    available_tickets = Ticket_Listing.query.filter_by(status='Available')
+    ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
+    
+    ticket_info = []
+    
+    for listing in ticket_paginated.items:
+        ticket = listing.ticket
+        if ticket and ticket.event:
+            ticket_info.append({
+            "event_name": ticket.event.event_name,
+            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            "category": ticket.seat_category,
+            "price": listing.get_price_str(),
+            
+        #event = ticket.event
+        
+        })
+            
+    print(ticket_info)
+    
+    return render_template('resale_market.html',
+                           tickets=ticket_info,
+                           total_pages=ticket_paginated.pages,
+                           current_page=ticket_paginated.page)
 
 if __name__ == '__main__':
     app.run(debug=True)
