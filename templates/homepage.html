@@ -1,31 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="Tooplate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" rel="stylesheet">
-
-    <title>TicketHive - Sell Tickets (Ticket Description)</title>
-
+    <title>Homepage - TicketHive</title>
     <link rel="shortcut icon" type="image/icon" href="static/images/logo.png"/>
-
-    <!-- Additional CSS Files -->
     <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
-
     <link rel="stylesheet" type="text/css" href="static/css/font-awesome.css">
-
     <link rel="stylesheet" type="text/css" href="static/css/owl-carousel.css">
-
     <link rel="stylesheet" href="static/css/tooplate-artxibition.css">
-
-    </head>
-    
-    <body>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
     <!-- ***** Preloader Start ***** -->
     <div id="js-preloader" class="js-preloader">
       <div class="preloader-inner">
@@ -40,25 +28,24 @@
     <!-- ***** Preloader End ***** -->
     
     <!-- ***** Header Area Start ***** -->
-    <header class="header-area header-sticky">
+     <!-- Refined Header -->
+     <header class="header-area header-sticky">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <nav class="main-nav">
-                        <!-- ***** Logo Start ***** -->
-                        <a href="/event_list" class="logo">Ticket<em>Hive</em></a>
-                        <!-- ***** Logo End ***** -->
-                        <!-- ***** Menu Start ***** -->
+                        <!-- Logo -->
+                        <a href="/homepage" class="logo">Ticket<em>Hive</em></a>
+                        <!-- Navigation -->
                         <ul class="nav">
-                            <li><a href="/ticket_inventory" class="active"><i class="fa fa-ticket fa-lg"></i> My Tickets</a></li>
-                            <li><a href="/ticket_sell1"><i class="fa fa-plus-circle fa-lg"></i> List Ticket</a></li>
-                            <li><a href="/resale_market"><i class="fa fa-shopping-bag fa-lg"></i> Resale Market</a></li>
-                            <li><a href="/"><i class="fa fa-sign-out fa-lg"></i> Sign Out</a></li>
+                            <li><a href="/resale_market"><i class="fa fa-shopping-bag fa-lg"></i> Marketplace</a></li>
+                            <li><a href="/ticket_inventory"><i class="fa fa-ticket-alt fa-lg"></i> My Tickets</a></li>
+                            <li><a href="/ticket_transaction_history"><i class="fa fa-wallet fa-lg"></i> Purchase History</a></li>
+                            <li><a href="/"><i class="fa fa-sign-out-alt fa-lg"></i> Sign Out</a></li>
                         </ul>        
                         <a class='menu-trigger'>
                             <span>Menu</span>
                         </a>
-                        <!-- ***** Menu End ***** -->
                     </nav>
                 </div>
             </div>
@@ -67,42 +54,35 @@
     <!-- ***** Header Area End ***** -->
 
     <!-- ***** About Us Page ***** -->
-    <div class="page-heading-shows-events">
+    <div class="page-heading-about">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h2>Sell Tickets</h2>
-                    <span>Fill up the form</span>
+                    <h2>Welcome to TicketHive</h2>
+                    <span id="date-time"></span>
+                    
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="ticket-details-page">
+    <div class="about-upcoming-shows mb-5">
         <div class="container">
             <div class="row">
-                <div class="col-lg-4">
-                    <div class="left-image">
-                        <img src="static/images/ticket-details.jpg" alt="">
-                    </div>
-                </div>
-                <div class="col-lg-8">
-                    <div class="right-content">
-                        <h4 class="mb-3">Sunny Hill Festival</h4>
-                        <form>
-                            <div class="form-group">
-                                <label for="price">Price</label>
-                                <input type="text" class="form-control" id="price">
-                            </div>
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea class="form-control" id="description" rows="3"></textarea>
-                            </div>
-                            <div class="total">
-                                <h4></h4>
-                                <div class="main-dark-button"><a href="#">Post</a></div>
-                            </div>
-                        </form>
+                <div class="col-lg-12">
+                    <h2>About Us</h2>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam consequat laoreet velit, accumsan accumsan nibh tristique faucibus. Nunc fermentum volutpat sapien aliquam venenatis. Sed quis urna porttitor, placerat est vitae, vestibulum arcu. Duis tempor mattis felis, vitae faucibus nibh congue non. Sed rhoncus ut ante a suscipit. Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque vitae enim nulla.</p>
+                    <h4>Items That Are Restricted</h4>
+                    <ul>
+                        <li>* Flash Cameras</li>
+                        <li>* Food & Drinks</li>
+                        <li>* Any kind of flashy objects</li>
+                    </ul>
+                    <h4>Directions & Car Parking</h4>
+                    <p>Sed enim odio, sagittis accumsan felis id, gravida facilisis mi. Maecenas dui dui, hendrerit quis dictum in, condimentum eu dui. Nulla vestibulum pretium lacus. Donec aliquet eros vel justo volutpat blandit. In malesuada est ligula, mattis lobortis tellus sollicitudin eget. Sed imperdiet dolor non congue tempor.
+                        </p>
+                    <div class="text-button">
+                        <a href="#">Need Directions? <i class="fa fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
@@ -205,6 +185,8 @@
             </div>
         </div>
     </footer>
+    
+    
 
     <!-- jQuery -->
     <script src="static/js/jquery-2.1.0.min.js"></script>
@@ -225,5 +207,25 @@
     <!-- Global Init -->
     <script src="static/js/custom.js"></script>
 
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            document.getElementById('date-time').textContent = now.toLocaleString('en-US', options);
+        }
+
+        // Update date and time every second
+        setInterval(updateDateTime, 1000);
+    </script>
+
   </body>
+
 </html>

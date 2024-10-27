@@ -41,17 +41,11 @@ def signin():
 
 # Route for the event list page for users
 # User able to buy event ticket, resale ticket and sell tickets
-@app.route('/event_list')
-def eventlist():
+@app.route('/homepage')
+def homepage():
     user_email = session.get('user')
     
-    return render_template('event_list.html', user_email=user_email)
-
-# Route for event details page
-@app.route('/event_details')
-def eventdetails():
-    
-    return render_template('event_details.html')
+    return render_template('homepage.html', user_email=user_email)
 
 # Route for event details page
 @app.route('/ticket_transaction_history')
@@ -65,34 +59,61 @@ def tickettransactionhistory():
 def ticketinventory():
     
     user_email = session.get('user')
-    user_type = session.get('user_type')
     
     if not user_email:
         return redirect(url_for('auth.signin'))
     
-    if user_type != 'admin':
-        return redirect(url_for('eventlist'))
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return "User not found", 404  # Handling the case where the user is not found
     
-    return render_template('ticket_inventory.html', user_email=user_email, user_type=user_type)
+    # Fetching tickets owned by the user
+    owned_tickets = user.tickets_owned 
 
-# Route for ticket selling page
-@app.route('/sell_ticket_1')
-def sellticket1():
-    
-    return render_template('ticket_sell1.html')
+    ticket_info = [{
+        "event_name": ticket.event.event_name,
+        "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+        "category": ticket.seat_category,
+        "price": ticket.get_price_str(),
+    } for ticket in owned_tickets]
 
-@app.route('/sell_ticket_2')
-def sellticket2():
-    
-    return render_template('ticket_sell2.html')
+    return render_template('ticket_inventory.html', tickets=ticket_info, user_email=user_email)
 
 # Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
-    # You can add any necessary logic here, e.g., fetching tickets from the database
     user_email = session.get('user')
     
-    return render_template('resale_market.html', user_email=user_email)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    if not user_email:
+        return redirect(url_for('auth.signin'))
+    
+    available_tickets = Ticket_Listing.query.filter_by(status='Available')
+    ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
+    
+    ticket_info = []
+    
+    for listing in ticket_paginated.items:
+        ticket = listing.ticket
+        if ticket and ticket.event:
+            ticket_info.append({
+            "event_name": ticket.event.event_name,
+            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            "category": ticket.seat_category,
+            "price": listing.get_price_str(),
+            
+        #event = ticket.event
+        
+        })
+            
+    print(ticket_info)
+    
+    return render_template('resale_market.html',
+                           tickets=ticket_info,
+                           total_pages=ticket_paginated.pages,
+                           current_page=ticket_paginated.page)
 
 if __name__ == '__main__':
     app.run(debug=True)
