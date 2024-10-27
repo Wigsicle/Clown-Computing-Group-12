@@ -5,6 +5,7 @@ from db import db
 from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
+import transaction
 
 load_dotenv()
 
@@ -47,11 +48,24 @@ def homepage():
     
     return render_template('homepage.html', user_email=user_email)
 
-# Route for event details page
+# Route for user transaction history page
 @app.route('/ticket_transaction_history')
 def tickettransactionhistory():
+    '''Let user view their past ticket transactions
+    Passes the buy and sell transactions as two separate lists to the ticket_transaction_history page to rendere'''
+    user_email = session.get('user') # use user email from session for now
+
+    if not user_email:
+        return redirect(url_for('auth.signin'))
+    user = User.query.filter_by(email=user_email).first()
+
+    if not user:
+        return "User not found", 404
     
-    return render_template('ticket_transaction_history.html')
+    purchase_listings = transaction.buyListTransTable(user)
+
+
+    return render_template('ticket_transaction_history.html', buyList=,sellList=)
 
 # Route for the ticket inventory page
 # List of user purchased ticket
