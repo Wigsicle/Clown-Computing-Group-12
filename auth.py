@@ -26,7 +26,7 @@ def signin():
             session.permanent = True
             
             if user.user_type == "normal":
-                return redirect(url_for('eventlist', user=user.email))
+                return redirect(url_for('resale_market', user=user.email))
             elif user.user_type == "admin":
                 return redirect(url_for('ticketinventory', user=user.email))
             else:
