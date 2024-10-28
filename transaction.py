@@ -1,11 +1,10 @@
 from models import User, Ticket_Listing
 from operator import attrgetter
-import datetime
 """Functions for the User Transaction History page"""
 
 
 # for sell listings, must check if the listing status is "Sold", do not include if it is still "Available"
-def buyListTransTable(user: User)->list:
+def buyListTransTable(buyList: list[Ticket_Listing])->list:
     """Generates a list of converted buy listing records sorted from newest to oldest purchase date.
     
     Sorts through the ticket_buy_list attribute of the user object and converts the ticket_listing objects
@@ -23,10 +22,6 @@ def buyListTransTable(user: User)->list:
     Raises:
         AttributeError: If specified user does not have a buy list
     """
-    try:
-        buyList = user.ticket_buy_list
-    except AttributeError:
-        raise AttributeError(f'User does not have any buy listing records.')
     
     buyList.sort(key=attrgetter('sold_on'), reverse=True) # sorts the buyList from Newest to Oldest 
     converted_list = []
@@ -43,10 +38,10 @@ def saleListTransTable(sale_list: list[Ticket_Listing])->list[dict[str,str]]:
     converted_list = []
 
     for listing in sale_list:
-        if listing.status == "Sold": # skip listings that are Available as they do not have a buyer ID
+        if listing.status == "Purchased": # skip listings that are Available as they do not have a buyer ID
             converted_list.append(listingToDict(listing,buyOrSell=False))
-
-        
+    
+    return converted_list
 
 def listingToDict(listing:Ticket_Listing, buyOrSell:bool=True)->dict[str, str]:
     """Converts a listing object into a buy or sell listing dict usable by the Transaction History Table.
@@ -73,7 +68,7 @@ def listingToDict(listing:Ticket_Listing, buyOrSell:bool=True)->dict[str, str]:
         if buyOrSell: # changes the dict field depending the argument
             listing_dict['seller_name'] = f"{listing.seller.first_name} {listing.seller.last_name}"  # gets the sellers first and last name and combines them 
         else:
-            listing_dict['buyer_name'] = f"{listing.buyer.first_name} {listing.seller.last_name}"
+            listing_dict['buyer_name'] = f"{listing.buyer.first_name} {listing.buyer.last_name}"
         listing_dict['price'] = listing.get_price_str() 
     except AttributeError:
         raise AttributeError()

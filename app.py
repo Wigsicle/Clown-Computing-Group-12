@@ -57,15 +57,26 @@ def tickettransactionhistory():
 
     if not user_email:
         return redirect(url_for('auth.signin'))
-    user = User.query.filter_by(email=user_email).first()
+    
+    test_user:User = User.query.filter_by(email=user_email).first()
 
-    if not user:
+    if not test_user:
         return "User not found", 404
     
-    purchase_listings = transaction.buyListTransTable(user)
+    #purchase_listings = transaction.buyListTransTable(user)
+    print(test_user)
+    buy_list_history:list = []
+    if test_user.ticket_buy_list:
+        buy_list_history = transaction.buyListTransTable(test_user.ticket_buy_list)
+        #print("After\n".join(buy_list_history))
+
+    sell_list_history:list = []
+    if test_user.ticket_sell_list:
+        sell_list_history = transaction.saleListTransTable(test_user.ticket_sell_list)
+        #print("After\n".join(sell_list_history))
 
 
-    return render_template('ticket_transaction_history.html', buyList=,sellList=)
+    return render_template('ticket_transaction_history.html', buyList=buy_list_history, sellList=sell_list_history)
 
 # Route for the ticket inventory page
 # List of user purchased ticket
