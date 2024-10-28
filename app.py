@@ -53,28 +53,25 @@ def homepage():
 def tickettransactionhistory():
     '''Let user view their past ticket transactions
     Passes the buy and sell transactions as two separate lists to the ticket_transaction_history page to rendere'''
-    user_email = session.get('user') # use user email from session for now
+    user_email:str = session.get('user') # use user email from session for now TODO change to user_id when ready
 
     if not user_email:
         return redirect(url_for('auth.signin'))
     
-    test_user:User = User.query.filter_by(email=user_email).first()
+    user:User = User.query.filter_by(email=user_email).first() # gets the latest transaction history when page loads 
 
-    if not test_user:
+    if not user:
         return "User not found", 404
     
-    #purchase_listings = transaction.buyListTransTable(user)
-    print(test_user)
-    buy_list_history:list = []
-    if test_user.ticket_buy_list:
-        buy_list_history = transaction.buyListTransTable(test_user.ticket_buy_list)
-        #print("After\n".join(buy_list_history))
+    buy_list_history:list = [] 
+    if user.ticket_buy_list:    # checks if the attribute exist or else skips the fn call
+        buy_list_history = transaction.buyListTransTable(user.ticket_buy_list)
 
-    sell_list_history:list = []
-    if test_user.ticket_sell_list:
-        sell_list_history = transaction.saleListTransTable(test_user.ticket_sell_list)
-        #print("After\n".join(sell_list_history))
+    sell_list_history:list = [] 
+    if user.ticket_sell_list:
+        sell_list_history = transaction.saleListTransTable(user.ticket_sell_list)
 
+    #TODO Add in pagination, add in a default jscript for the table if there are no values in the list  
 
     return render_template('ticket_transaction_history.html', buyList=buy_list_history, sellList=sell_list_history)
 
