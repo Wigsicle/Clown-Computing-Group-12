@@ -38,7 +38,7 @@ def saleListTransTable(sale_list: list[Ticket_Listing])->list[dict[str,str]]:
     converted_list = []
 
     for listing in sale_list:
-        if listing.status == "Purchased": # skip listings that are Available as they do not have a buyer ID
+        if listing.status == "Sold": # skip listings that are Available as they do not have a buyer ID
             converted_list.append(listingToDict(listing,buyOrSell=False))
     
     return converted_list
