@@ -6,7 +6,18 @@ import mariadb
 import csv
 
 def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
-    # pull the local .env credentials  for use in the connection
+    '''pull the local .env credentials  for use in the connection
+    
+    Checks the local project file system for the .env file and loads the database access credentials.
+    
+    Args:
+        path: the relative file path to the .env file
+        
+    Return:
+        db_username
+        db_password
+        host ip
+        db_name'''
     load_dotenv(path)
     DB_USER = os.getenv('DB_USERNAME')
     DB_PASS = os.getenv('DB_PASSWORD')
