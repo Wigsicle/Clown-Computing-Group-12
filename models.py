@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, DateTime, Time, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from typing import List, Optional
 from db import db
 from datetime import datetime
@@ -24,14 +26,18 @@ class Event(db.Model):
     event_id:Mapped[int] = mapped_column(Integer, primary_key=True)
     event_name:Mapped[str] = mapped_column(String(120), nullable=False) # Name of event
     event_datetime:Mapped[datetime] = mapped_column(DateTime, nullable=False) # datetime that the event will start at
-    #time:Mapped[time] = mapped_column(Time, nullable=False) #TODO come back here ltr
     location:Mapped[str] = mapped_column(String(120), nullable=False) # Location of event
     description:Mapped[str] = mapped_column(String(120), nullable=True) # Event details
     event_image:Mapped[str] = mapped_column(String(120), nullable=False) # event images directory path/S3 url 
-    status:Mapped[str] = mapped_column(String(50), nullable=False,default="Upcoming")
-    '''Status of the Event, 'Upcoming'/'Ended'\n
-    Upcoming: Event hasn't started yet\n
-    Ended: Event has completed'''
+
+    @hybrid_property
+    def status(self)->Mapped[str]:
+        """Returns the status of the event depending on the current date."""
+        if self.event_datetime >= datetime.now():
+            return "Upcoming"
+        else:
+            return "Ended"
+
     tickets:Mapped[List['Ticket']] = relationship('Ticket', back_populates="event")
     
     
@@ -49,11 +55,7 @@ class Ticket(db.Model):
     '''Datetime object generated when ticket is registered into system'''
     seat_category:Mapped[str] = mapped_column(String(50), nullable=False, default='empty') # pull from BC
     seat_number:Mapped[str] = mapped_column(String(20), nullable=False) # pull from BC
-    status:Mapped[str] = mapped_column(String(50), nullable=False, default='Not Listed') 
-    '''Status of ticket:\n
-    'Not Listed': Default value if the ticket is not listed on the marketplace\n
-    'Listed': Value when the ticket is currently available for sale on the marketplace\n
-    '''
+    
 
     # FK dependencies
     owner_id:Mapped[int] = mapped_column(Integer, ForeignKey('user.user_id'), nullable=False) # added when ticket is registered, updated when bought
@@ -64,9 +66,29 @@ class Ticket(db.Model):
     owner:Mapped["User"] = relationship('User', back_populates="tickets_owned", foreign_keys=[owner_id]) # child of Event
     event:Mapped["Event"] = relationship('Event', back_populates="tickets", foreign_keys=[event_id]) # every ticket has an event linked to it
 
-    def get_price_str(self) -> str: 
-        """Returns the listed price as a string in dollar format."""
-        return '${:,.2f}'.format(self.ticket_price_cents / 100)
+    @classmethod
+    def get_price_str(self, dollarSign:bool=True) -> str: 
+        """Returns the listed price as a string in dollar format.\n
+        Args:
+            dollarSign: Attach a dollar sign to the front, Yes by default
+        Format: '$12,345.67' """
+        price_str:str = '{:,.2f}'.format(self.ticket_price_cents / 100)
+
+        if dollarSign:
+            return '$' + price_str
+        else:
+            return price_str
+    
+    @hybrid_property
+    def listing_status(self)->Mapped[str]:
+        '''Status of ticket\n
+        'Not Listed': Default value if the ticket is not listed on the marketplace\n
+        'Listed': Value when the ticket is currently available for sale on the marketplace
+        '''
+        for listing in self.ticket_listing_history:
+            if listing.status == 'Available':
+                return 'Listed'
+        return 'Not Listed'
 
 
 class Ticket_Listing(db.Model):
@@ -96,9 +118,35 @@ class Ticket_Listing(db.Model):
     buyer:Mapped[Optional["User"]] = relationship(foreign_keys=[buyer_id], back_populates="ticket_buy_list")
     ticket:Mapped["Ticket"] = relationship('Ticket', back_populates='ticket_listing_history', foreign_keys=[ticket_id]) # every ticket listing has one ticket linked to it whose details you can access through here
 
-    def get_price_str(self) -> str: 
-        """Returns the listed price as a string in dollar format."""
-        return '${:,.2f}'.format(self.sale_price_cents / 100)
+    @classmethod
+    def get_price_str(self, dollarSign:bool=True) -> str: 
+        """Returns the listed price as a string in dollar format.\n
+        Args:
+            dollarSign: Attach a dollar sign to the front, Yes by default
+        Format: '$12,345.67' """
+        price_str:str = '{:,.2f}'.format(self.ticket_price_cents / 100)
+
+        if dollarSign:
+            return '$' + price_str
+        else:
+            return price_str
+    
+    @hybrid_property
+    def real_status(self)->Mapped[str]:
+        '''Status of ticket listing.\n
+        Available: Listing is currently available to purchase from and the Ticket's event has not ended yet (No buyer yet)\n
+        Sold: Listing is not available to purchase as a buyer has purchased the listed ticket (Has buyer)\n
+        Expired: Listing did not sell and the event has ended already (No buyer)'''
+        if self.ticket.event.status == "Ended":
+            return "Expired"
+        else:
+            if self.buyer_id is not None:
+                return "Sold"
+            else:
+                return "Available"
+
+    
+
     
 
 
