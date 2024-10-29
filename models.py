@@ -45,12 +45,12 @@ class Ticket(db.Model):
     register_date:Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now()) # date when the ticket was registered into system
     '''Datetime object generated when ticket is registered into system'''
     seat_category:Mapped[str] = mapped_column(String(50), nullable=False, default='empty') # pull from BC
-    seat_number:Mapped[int] = mapped_column(Integer, nullable=False) # pull from BC
+    seat_number:Mapped[str] = mapped_column(String(20), nullable=False) # pull from BC
     status:Mapped[str] = mapped_column(String(50), nullable=False, default='Not Listed') 
     '''Status of ticket:\n
     'Not Listed': Default value if the ticket is not listed on the marketplace\n
     'Listed': Value when the ticket is currently available for sale on the marketplace\n
-    'Expired': Event that ticket is connected to has concluded '''
+    'Ended': Event that ticket is connected to has concluded '''
 
     # FK dependencies
     owner_id:Mapped[int] = mapped_column(Integer, ForeignKey('user.user_id'), nullable=False) # added when ticket is registered, updated when bought
