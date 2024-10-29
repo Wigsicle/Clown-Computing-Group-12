@@ -28,7 +28,10 @@ class Event(db.Model):
     location:Mapped[str] = mapped_column(String(120), nullable=False) # Location of event
     description:Mapped[str] = mapped_column(String(120), nullable=True) # Event details
     event_image:Mapped[str] = mapped_column(String(120), nullable=False) # event images directory path/S3 url 
-    
+    status:Mapped[str] = mapped_column(String(50), nullable=False,default="Upcoming")
+    '''Status of the Event, 'Upcoming'/'Ended'\n
+    Upcoming: Event hasn't started yet\n
+    Ended: Event has completed'''
     tickets:Mapped[List['Ticket']] = relationship('Ticket', back_populates="event")
     
     
@@ -50,7 +53,7 @@ class Ticket(db.Model):
     '''Status of ticket:\n
     'Not Listed': Default value if the ticket is not listed on the marketplace\n
     'Listed': Value when the ticket is currently available for sale on the marketplace\n
-    'Ended': Event that ticket is connected to has concluded '''
+    '''
 
     # FK dependencies
     owner_id:Mapped[int] = mapped_column(Integer, ForeignKey('user.user_id'), nullable=False) # added when ticket is registered, updated when bought
