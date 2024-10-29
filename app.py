@@ -5,7 +5,7 @@ from db import db
 from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
-import transaction
+import transaction_history
 
 load_dotenv()
 
@@ -65,11 +65,11 @@ def tickettransactionhistory():
     
     buy_list_history:list = [] 
     if user.ticket_buy_list:    # checks if the attribute exist or else skips the fn call
-        buy_list_history = transaction.buyListTransTable(user.ticket_buy_list)
+        buy_list_history = transaction_history.buyListTransTable(user.ticket_buy_list)
 
     sell_list_history:list = [] 
     if user.ticket_sell_list:
-        sell_list_history = transaction.saleListTransTable(user.ticket_sell_list)
+        sell_list_history = transaction_history.saleListTransTable(user.ticket_sell_list)
 
     #TODO Add in pagination, add in a default jscript for the table if there are no values in the list  
 
