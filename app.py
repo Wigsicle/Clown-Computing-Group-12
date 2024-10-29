@@ -55,8 +55,8 @@ def tickettransactionhistory():
     Passes the buy and sell transactions as two separate lists to the ticket_transaction_history page to rendere'''
     user_email:str = session.get('user') # use user email from session for now TODO change to user_id when ready
 
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
+    selected_page_num = request.args.get('page', 1, type=int) # gets the selected page number from GET request
+    records_per_page = 10   # number of records per page
 
     if not user_email:
         return redirect(url_for('auth.signin'))
@@ -71,30 +71,24 @@ def tickettransactionhistory():
         buy_list_history = transaction_history.buyListTransTable(user.ticket_buy_list)
     
     # Buy pagination
-    buy_start = (page - 1) * per_page
-    buy_end = buy_start + per_page
-    buy_history_paginated = buy_list_history[buy_start:buy_end]
-    buy_total_pages = (len(buy_list_history) + per_page - 1) // per_page
+    buy_history_paginated = transaction_history.sliceListIntoPages(buy_list_history, records_per_page, selected_page_num)
+    buy_total_pages = (len(buy_list_history) + records_per_page - 1) // records_per_page
 
     sell_list_history:list = [] 
     if user.ticket_sell_list:
         sell_list_history = transaction_history.saleListTransTable(user.ticket_sell_list)
 
     # Sell pagination
-    sell_start = (page - 1) * per_page
-    sell_end = sell_start + per_page
-    sell_history_paginated = sell_list_history[sell_start:sell_end]
-    sell_total_pages = (len(sell_list_history) + per_page - 1) // per_page
-
-    #TODO Add in pagination, add in a default jscript for the table if there are no values in the list  
+    sell_history_paginated = transaction_history.sliceListIntoPages(sell_list_history, 10, selected_page_num)
+    sell_total_pages = (len(sell_list_history) + records_per_page - 1) // records_per_page
 
     return render_template('ticket_transaction_history.html', 
                            buyList=buy_history_paginated,
-                           buy_total_pages=buy_total_pages,
-                           buy_current_page=page,
+                           buy_total_pages=buy_total_pages, # tells page how many buy pages there are
+                           buy_current_page=selected_page_num, # tracks current Buy table page
                            sellList=sell_history_paginated,
                            sell_total_pages=sell_total_pages,
-                           sell_current_page=page)
+                           sell_current_page=selected_page_num)
 
 # Route for the ticket inventory page
 # List of user purchased ticket
