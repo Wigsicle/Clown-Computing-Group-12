@@ -22,11 +22,13 @@ def signin():
         
         if user and user.password == password:
             session['user'] = user.email
+            session['user_type'] = user.user_type
+            session.permanent = True
             
             if user.user_type == "normal":
-                return redirect(url_for('eventlist'))
+                return redirect(url_for('resale_market', user=user.email))
             elif user.user_type == "admin":
-                return redirect(url_for('ticketinventory'))
+                return redirect(url_for('ticketinventory', user=user.email))
             else:
                 return redirect(url_for('auth.signin'))
         else:
