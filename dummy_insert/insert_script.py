@@ -27,7 +27,7 @@ def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
     return DB_USER, DB_PASS, host, name
 
 
-def get_sql_from_csv(csv_file_path:str,table_name:str) -> str:
+def insert_sql_from_csv(table_name:str,csv_file_path:str) -> str:
     """Create a sql statement from the specified CSV filepath"""
     print(f"Writing SQL Statement for {table_name} table")
     try:
@@ -49,17 +49,35 @@ def get_sql_from_csv(csv_file_path:str,table_name:str) -> str:
     return sql_statement
 
 
-def insert_table_values(sql_conn:mariadb.Connection, table_name:str, csv_file_path:str):
+def execute_sql(sql_conn:mariadb.Connection, sql_statement:str, table_name:str='blank'):
     
     db_cursor = sql_conn.cursor()
-    sql_statement = get_sql_from_csv(csv_file_path, table_name)
     try:
         db_cursor.execute(sql_statement)
         sql_conn.commit()
-        print(f"Succesfully populated table {table_name}")
+        print(f"Succesfully run statement for {table_name} table")
     except:
         sql_conn.rollback()
 
+
+def update_missing_values(table_name:str, csv_file_path:str, col_name:list[str]):
+    col_count = col_name.count
+    col_name_num:dict = []
+    row_count = 1 # find column that is iterable 
+    
+    try:
+        with open(Path(__file__).parent / csv_file_path, encoding='utf8', mode='r') as file:
+            csv_file = csv.reader(file)
+    except OSError:
+        print(f"Failed to open file at {csv_file_path}")
+
+    # CSV Header Row Section
+    for col in col_name: # find csv column value that matches column name argument
+        return    
+    
+    # CSV Body Section
+    for row in csv_file:
+        sql_statement = f'UPDATE {table_name} SET {col_name[0]} = {row} WHERE '
 
 if __name__ == '__main__':
     print("ticket_hive Database Insertion Script")
@@ -74,10 +92,10 @@ if __name__ == '__main__':
     
     try:
         print(f"Succesfully connected to DB {db_name}\nStarting insert operations...")
-        insert_table_values(connection, "event", "event.csv")  
-        insert_table_values(connection, "user", 'user.csv')
-        insert_table_values(connection, "ticket", "ticket.csv")
-        insert_table_values(connection, "ticket_listing", "ticket_listing.csv")
+        execute_sql(connection, insert_sql_from_csv("event", "event.csv"),'event')
+        execute_sql(connection, insert_sql_from_csv("user", 'user.csv'),'user')
+        execute_sql(connection, insert_sql_from_csv("ticket", "ticket.csv"),'ticket')
+        execute_sql(connection, insert_sql_from_csv("ticket_listing", "ticket_listing.csv"),'ticket_listing')
 
 
     finally:
