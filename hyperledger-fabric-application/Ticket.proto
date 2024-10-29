@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ticket;
+
+// Specify the Go package path
+option go_package = "./;ticket";
+
+service Ticket {
+  rpc ReadTicketById (ReadTicketByIdRequest) returns (ReadTicketByIdReply);
+  rpc TransferTicket (TransferTicketRequest) returns (TransferTicketReply);
+}
+
+message ReadTicketByIdRequest {
+    string ticketId = 1;
+}
+
+message TransferTicketRequest {
+    string ticketId =1;
+    string newOwner = 2;
+}
+
+message ReadTicketByIdReply {
+    string ticketInfo = 1;
+}
+
+message TransferTicketReply {
+    bool success = 1;
+}
