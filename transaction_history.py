@@ -75,4 +75,19 @@ def listingToDict(listing:Ticket_Listing, buyOrSell:bool=True)->dict[str, str]:
 
     return listing_dict
 
+def sliceListIntoPages(fullList:list, pageSize:int=10, pageNum:int=1)->list[dict]:
+    '''Returns a section (page) of the list based on page size and page number
 
+    Args:
+        fullList: List to be split up
+        pageSize: Number of records to display on the page
+        pageNum: selected page of records to display
+    
+    Returns:
+        slice of the page based on the args'''
+        
+    start_index = (pageNum - 1) * pageSize  # first record in page to display
+    end_index = start_index + pageSize # last record in page to display
+    selected_page_list = fullList[start_index:end_index] # gets a slice of the list based on start and end indexes
+
+    return selected_page_list   
