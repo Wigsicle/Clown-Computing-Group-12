@@ -47,7 +47,7 @@ peer lifecycle chaincode queryinstalled
 Copy the basic_1.0............ until the comma
 
 - Replace the basic_1.0..............................................
-export CC_PACKAGE_ID=basic_1.0:d75ab1e7f780ec577095b5df2c43b4e3adda632e3cac6b2be8addd3a6a0bec00
+export CC_PACKAGE_ID=[here] without the []
 
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name basic --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 
