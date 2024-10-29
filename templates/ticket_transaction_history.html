@@ -123,6 +123,14 @@
                                                                         <tr>
                                                                             <td class="text-center">No Transaction History</td>
                                                                         </tr>
+                                                                        {% for listing in buyList %}
+                                                                        <tr>
+                                                                            <td>{{ listing['date'] }}</td>
+                                                                            <td>{{ listing['event_name'] }}</td>
+                                                                            <td>{{ listing['seller_name'] }}</td>
+                                                                            <td>{{ listing['price'] }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
                                                                     </tbody>
                                                                 </table>
                                                                 {% endif %}
@@ -184,6 +192,14 @@
                                                                         <tr>
                                                                             <td class="text-center">No Transaction History</td>
                                                                         </tr>
+                                                                        {% for listing in sellList %}
+                                                                        <tr>
+                                                                            <td>{{ listing['date'] }}</td>
+                                                                            <td>{{ listing['event_name'] }}</td>
+                                                                            <td>{{ listing['buyer_name'] }}</td>
+                                                                            <td>{{ listing['price'] }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
                                                                     </tbody>
                                                                 </table>
                                                                 {% endif %}
