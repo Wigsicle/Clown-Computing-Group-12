@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, g, session
 from flask_migrate import Migrate
 import os
 from db import db
@@ -27,6 +27,17 @@ migrate = Migrate(app, db)
 
 from models import User, Event, Ticket, Ticket_Listing
 
+@app.context_processor
+def inject_user():
+    return {'current_user': g.user}
+
+@app.before_request
+def load_logged_in_user():
+    user_email = session.get('user')
+    if user_email is None:
+        g.user = None
+    else:
+        g.user = User.query.filter_by(email=user_email).first()
 # Route for the homepage
 @app.route('/')
 def home():
@@ -82,13 +93,11 @@ def ticketinventory():
 # Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
-    user_email = session.get('user')
+    if not g.user:
+        return redirect(url_for('auth.signin'))
     
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
-    if not user_email:
-        return redirect(url_for('auth.signin'))
     
     available_tickets = Ticket_Listing.query.filter_by(status='Available')
     ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
