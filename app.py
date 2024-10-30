@@ -5,6 +5,7 @@ from db import db
 from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
+import transaction_history
 
 load_dotenv()
 
@@ -58,11 +59,47 @@ def homepage():
     
     return render_template('homepage.html', user_email=user_email)
 
-# Route for event details page
+# Route for user transaction history page
 @app.route('/ticket_transaction_history')
 def tickettransactionhistory():
+    '''Let user view their past ticket transactions
+    Passes the buy and sell transactions as two separate lists to the ticket_transaction_history page to rendere'''
+    user_email:str = session.get('user') # use user email from session for now TODO change to user_id when ready
+
+    selected_page_num = request.args.get('page', 1, type=int) # gets the selected page number from GET request
+    records_per_page = 10   # number of records per page
+
+    if not user_email:
+        return redirect(url_for('auth.signin'))
     
-    return render_template('ticket_transaction_history.html')
+    user:User = User.query.filter_by(email=user_email).first() # gets the latest transaction history when page loads 
+
+    if not user:
+        return "User not found", 404
+    
+    buy_list_history:list = [] 
+    if user.ticket_buy_list:    # checks if the attribute exist or else skips the fn call
+        buy_list_history = transaction_history.buyListTransTable(user.ticket_buy_list)
+    
+    # Buy pagination
+    buy_history_paginated = transaction_history.sliceListIntoPages(buy_list_history, records_per_page, selected_page_num)
+    buy_total_pages = (len(buy_list_history) + records_per_page - 1) // records_per_page
+
+    sell_list_history:list = [] 
+    if user.ticket_sell_list:
+        sell_list_history = transaction_history.saleListTransTable(user.ticket_sell_list)
+
+    # Sell pagination
+    sell_history_paginated = transaction_history.sliceListIntoPages(sell_list_history, 10, selected_page_num)
+    sell_total_pages = (len(sell_list_history) + records_per_page - 1) // records_per_page
+
+    return render_template('ticket_transaction_history.html', 
+                           buyList=buy_history_paginated,
+                           buy_total_pages=buy_total_pages, # tells page how many buy pages there are
+                           buy_current_page=selected_page_num, # tracks current Buy table page
+                           sellList=sell_history_paginated,
+                           sell_total_pages=sell_total_pages,
+                           sell_current_page=selected_page_num)
 
 # Route for the ticket inventory page
 # List of user purchased ticket
