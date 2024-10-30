@@ -1,5 +1,5 @@
 from models import User, Ticket_Listing
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 """Functions for the User Transaction History page"""
 
 
@@ -34,12 +34,13 @@ def buyListTransTable(buyList: list[Ticket_Listing])->list:
 def saleListTransTable(sale_list: list[Ticket_Listing])->list[dict[str,str]]:
     """Generates a list of converted sale listing records sorted from newest to oldest sell date listing."""
 
-    sale_list.sort(key=attrgetter('sold_on'), reverse=True)
     converted_list = []
 
     for listing in sale_list:
-        if listing.status == "Sold": # skip listings that are Available as they do not have a buyer ID
+        if listing.status == "Sold": # skip listings that are Available or Expired as they do not have a buyer ID
             converted_list.append(listingToDict(listing,buyOrSell=False))
+            
+    converted_list.sort(key=itemgetter('date'), reverse=True)
     
     return converted_list
 
@@ -63,15 +64,16 @@ def listingToDict(listing:Ticket_Listing, buyOrSell:bool=True)->dict[str, str]:
     
     try:
         listing_dict = {} # declares the dict object
-        listing_dict['date'] = listing.sold_on.strftime("%d %b %Y") # converts the sold_on datetime object into a string in the format 'DD MMM YYYY'
+        
         listing_dict['event_name'] = listing.ticket.event.event_name # gets the event name from the Event object
         if buyOrSell: # changes the dict field depending the argument
             listing_dict['seller_name'] = f"{listing.seller.first_name} {listing.seller.last_name}"  # gets the sellers first and last name and combines them 
         else:
             listing_dict['buyer_name'] = f"{listing.buyer.first_name} {listing.buyer.last_name}"
         listing_dict['price'] = listing.get_price_str() 
+        listing_dict['date'] = listing.sold_on.strftime("%d %b %Y") # converts the sold_on datetime object into a string in the format 'DD MMM YYYY'
     except AttributeError:
-        raise AttributeError()
+        listing_dict['date'] = listing.listed_on.strftime("%d %b %Y") # places listed_on value if sold_on is missing
 
     return listing_dict
 
