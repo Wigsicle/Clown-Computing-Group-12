@@ -1,4 +1,4 @@
-ticket_id,ticket_price_cents,register_date,seat_category,owner_id,event_id,seat_no
+ticket_id,ticket_price_cents,register_date,seat_category,owner_id,event_id,seat_number
 1,13400,2023-11-02 19:59:09,2,2,2,24F
 2,15806,2024-01-28 13:15:03,2,3,3,33B
 3,42636,2024-06-01 04:20:22,VIP,1,2,35C

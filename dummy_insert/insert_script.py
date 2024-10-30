@@ -5,8 +5,8 @@ from typing import Tuple
 import mariadb
 import csv
 
-completed_transactions:int = 0
 started_transactions:int = 0
+completed_transactions:int = 0
 
 def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
     '''pull the local .env credentials  for use in the connection
@@ -40,7 +40,15 @@ def insert_sql_from_csv(table_name:str,csv_file_path:str) -> str:
             insert_statement_start = f'INSERT INTO {table_name} (' + ", ".join(headers) + ") VALUES "
             sql_statement = insert_statement_start
             for row in csv_file:
-                values = map((lambda x: '"'+x+'"'), row)
+                #values = map((lambda x: '"'+x+'"'), row)
+                ''' ["x","y","z"] '''
+                values:list = []
+                for val in row:
+                    if val != 'None':
+                        values.append('"' + val + '"')
+                    else:
+                        values.append("NULL")
+                    # ultra super cursed way to handle None to NULL vals
                 values_line = "("+ ", ".join(values) +"),"
                 sql_statement = sql_statement + values_line
                 print(values_line)
@@ -55,12 +63,17 @@ def insert_sql_from_csv(table_name:str,csv_file_path:str) -> str:
 def execute_sql(sql_conn:mariadb.Connection, sql_statement:str, table_name:str='blank'):
     
     db_cursor = sql_conn.cursor()
+
+    global started_transactions  
+    global completed_transactions
     started_transactions += 1
     try:
         db_cursor.execute(sql_statement)
         sql_conn.commit()
         print(f"Succesfully run statement for {table_name} table")
         completed_transactions += 1
+    except mariadb.Error as e:
+        print(e)
     except:
         sql_conn.rollback()
 
