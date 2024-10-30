@@ -5,6 +5,9 @@ from typing import Tuple
 import mariadb
 import csv
 
+completed_transactions:int = 0
+started_transactions:int = 0
+
 def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
     '''pull the local .env credentials  for use in the connection
     
@@ -52,10 +55,12 @@ def insert_sql_from_csv(table_name:str,csv_file_path:str) -> str:
 def execute_sql(sql_conn:mariadb.Connection, sql_statement:str, table_name:str='blank'):
     
     db_cursor = sql_conn.cursor()
+    started_transactions += 1
     try:
         db_cursor.execute(sql_statement)
         sql_conn.commit()
         print(f"Succesfully run statement for {table_name} table")
+        completed_transactions += 1
     except:
         sql_conn.rollback()
 
@@ -99,5 +104,5 @@ if __name__ == '__main__':
 
 
     finally:
-        print("Closing connection")
+        print(f"Transactions Completed: {completed_transactions}/{started_transactions}\nClosing connection")
         connection.close()
