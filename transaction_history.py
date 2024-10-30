@@ -34,11 +34,10 @@ def buyListTransTable(buyList: list[Ticket_Listing])->list:
 def saleListTransTable(sale_list: list[Ticket_Listing])->list[dict[str,str]]:
     """Generates a list of converted sale listing records sorted from newest to oldest sell date listing."""
 
-    #sale_list.sort(key=attrgetter('sold_on'), reverse=True)
     converted_list = []
 
     for listing in sale_list:
-        if listing.status == "Sold": # skip listings that are Available as they do not have a buyer ID
+        if listing.status == "Sold": # skip listings that are Available or Expired as they do not have a buyer ID
             converted_list.append(listingToDict(listing,buyOrSell=False))
             
     converted_list.sort(key=itemgetter('date'), reverse=True)
