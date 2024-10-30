@@ -17,8 +17,8 @@ class User(db.Model):
     last_name:Mapped[str] = mapped_column(String(50), nullable=False)
     
     tickets_owned:Mapped[list['Ticket']] = relationship('Ticket', back_populates="owner", lazy=True)
-    ticket_sell_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.seller_id', back_populates="seller")
-    ticket_buy_list:Mapped[list['Ticket_Listing']] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.buyer_id', back_populates="buyer") # back populates off listing rs
+    ticket_sell_list:Mapped[Optional[list['Ticket_Listing']]] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.seller_id', back_populates="seller")
+    ticket_buy_list:Mapped[Optional[list['Ticket_Listing']]] = relationship('Ticket_Listing', foreign_keys='Ticket_Listing.buyer_id', back_populates="buyer") # back populates off listing rs
 
 class Event(db.Model):
     """Event class contains the details of the event."""
@@ -66,7 +66,6 @@ class Ticket(db.Model):
     owner:Mapped["User"] = relationship('User', back_populates="tickets_owned", foreign_keys=[owner_id]) # child of Event
     event:Mapped["Event"] = relationship('Event', back_populates="tickets", foreign_keys=[event_id]) # every ticket has an event linked to it
 
-    @classmethod
     def get_price_str(self, dollarSign:bool=True) -> str: 
         """Returns the listed price as a string in dollar format.\n
         Args:
@@ -118,18 +117,20 @@ class Ticket_Listing(db.Model):
     buyer:Mapped[Optional["User"]] = relationship(foreign_keys=[buyer_id], back_populates="ticket_buy_list")
     ticket:Mapped["Ticket"] = relationship('Ticket', back_populates='ticket_listing_history', foreign_keys=[ticket_id]) # every ticket listing has one ticket linked to it whose details you can access through here
 
-    @classmethod
     def get_price_str(self, dollarSign:bool=True) -> str: 
         """Returns the listed price as a string in dollar format.\n
         Args:
             dollarSign: Attach a dollar sign to the front, Yes by default
         Format: '$12,345.67' """
-        price_str:str = '{:,.2f}'.format(self.ticket_price_cents / 100)
-
+        sale_price_cents = int(self.sale_price_cents)
+        price_str:str = '{:,.2f}'.format(sale_price_cents / 100.)
+        print(price_str)
         if dollarSign:
-            return '$' + price_str
+            return f'${price_str}'
         else:
             return price_str
+        
+
     
     @hybrid_property
     def real_status(self)->Mapped[str]:

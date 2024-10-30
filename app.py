@@ -67,7 +67,7 @@ def tickettransactionhistory():
         return "User not found", 404
     
     buy_list_history:list = [] 
-    if user.ticket_buy_list:    # checks if the attribute exist or else skips the fn call
+    if user.ticket_buy_list is not None:    # checks if the attribute exist or else skips the fn call
         buy_list_history = transaction_history.buyListTransTable(user.ticket_buy_list)
     
     # Buy pagination
@@ -75,7 +75,7 @@ def tickettransactionhistory():
     buy_total_pages = (len(buy_list_history) + records_per_page - 1) // records_per_page
 
     sell_list_history:list = [] 
-    if user.ticket_sell_list:
+    if user.ticket_sell_list is not None:
         sell_list_history = transaction_history.saleListTransTable(user.ticket_sell_list)
 
     # Sell pagination
