@@ -43,3 +43,9 @@ Once everything done, run the 'create_db.py' script to create the models, but yo
 1. Start up the docker database container
     ```docker-compose up```
 2. Start the Web Application by running app.py
+
+You might face issues where you need to rebuild your container image after docker-compose changes
+    ```
+    docker stop <container_id>
+    docker rm <container_id>
+    ```
