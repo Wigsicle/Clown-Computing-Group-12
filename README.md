@@ -39,3 +39,7 @@ In the event that you need to change the data, just change the respective table 
 ### Running the script ("OLD, MIGHT WORK, MAYBE." - DAN)
 Once everything done, run the 'create_db.py' script to create the models, but you need to create a schema in your mysql host first "ticket_hive"
 
+## Application Start Up
+1. Start up the docker database container
+    ```docker-compose up```
+2. Start the Web Application by running app.py
