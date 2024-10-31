@@ -2,7 +2,7 @@ services:
   # app:
   #   # app service definition
   #   environment:
-  #     - MYSQL_HOST: 127.0.0.1:3306
+  #     - MYSQL_HOST: 127.0.0.1:3307
   #     - MYSQL_USER: root
   #     - MYSQL_PASSWORD: admin
   #     - MYSQL_DATABASE: ticket_hive
@@ -11,17 +11,21 @@ services:
     image: mariadb:latest
     container_name: ticket_hive_db
     environment:
-      - MYSQL_ROOT_PASSWORD: admin
-      - MYSQL_DATABASE: ticket_hive
-      - MYSQL_USER: root
-      - MYSQL_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: ticket_hive
+      MYSQL_USER: root
+      MYSQL_PASSWORD: admin
       # technically you won't need the local .env file 
       # if you're using this so don't change anything here
     ports:
-      - "127.0.0.1:3306:3306"
+      - 3307:3306
     volumes:
-      - ticket_hive_project:/var/lib/
+      - ticket_hive_data:/var/lib/mysql # [volume name]:[directory in the container it is access by]
+      - ticket_hive_logs:/var/log/mysql
 
-  volumes:
-    ticket_hive_project:
+volumes:
+  ticket_hive_data:
+      #driver: local
       # this is where it will store the database data
+  ticket_hive_logs:
+      #driver: local

@@ -8,7 +8,7 @@ import csv
 started_transactions:int = 0
 completed_transactions:int = 0
 
-def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
+def retrieve_env_vars(path:str) -> dict[str,str]:
     '''pull the local .env credentials  for use in the connection
     
     Checks the local project file system for the .env file and loads the database access credentials.
@@ -16,18 +16,25 @@ def retrieve_env_vars(path:str) -> Tuple[str, str, str, str]:
     Args:
         path: the relative file path to the .env file
         
-    Return:
-        db_username
-        db_password
-        host ip
-        db_name'''
+    Returns:
+        Dictionary object with attributes
+            'username',
+            'password',
+            'db_host',
+            'db_name',
+            'db_port'
+            
+    '''
+    
     load_dotenv(path)
-    DB_USER = os.getenv('DB_USERNAME')
-    DB_PASS = os.getenv('DB_PASSWORD')
-    host = os.getenv('DB_HOST')
-    name = os.getenv('DB_NAME')
-    print(f"Using credentials\nHost:{host}\nDB Name:{name}\nUsername:{DB_USER}\nPwd:{DB_PASS}")
-    return DB_USER, DB_PASS, host, name
+    env_variables:dict = {}
+    env_variables['username'] = os.getenv('DB_USERNAME')
+    env_variables['password'] = os.getenv('DB_PASSWORD')
+    env_variables['db_host'] = os.getenv('DB_HOST')
+    env_variables['db_name'] = os.getenv('DB_NAME')
+    env_variables['db_port'] = os.getenv('DB_PORT')
+    print(f"Using credentials\nHost:{env_variables['db_host']}:{env_variables['db_port']}\nDB Name:{env_variables['db_name']}\nUsername:{env_variables['username']}\nPwd:{env_variables['password']}")
+    return env_variables
 
 
 def insert_sql_from_csv(table_name:str,csv_file_path:str) -> str:
@@ -99,17 +106,23 @@ def update_missing_values(table_name:str, csv_file_path:str, col_name:list[str])
 
 if __name__ == '__main__':
     print("ticket_hive Database Insertion Script")
-    db_user, db_pass, db_host, db_name = retrieve_env_vars('../.env')
+    print("Getting environment variables")
+    if not os.getenv("DB_USERNAME"):
+        raise RuntimeError("You have not set your local .env variables yet. Please refer to README\n")
+
+    
+    db_vars:dict = retrieve_env_vars('../.env')
 
     connection = mariadb.connect(
-            host = db_host,
-            user = db_user,
-            password = db_pass,
-            database= db_name
+            host = db_vars['db_host'],
+            user = db_vars['username'],
+            password = db_vars['password'],
+            database = db_vars['db_name'],
+            port = int(db_vars['db_port']),
         )
     
     try:
-        print(f"Succesfully connected to DB {db_name}\nStarting insert operations...")
+        print(f"Succesfully connected to DB {db_vars['db_name']}\nStarting insert operations...")
         execute_sql(connection, insert_sql_from_csv("event", "event.csv"),'event')
         execute_sql(connection, insert_sql_from_csv("user", 'user.csv'),'user')
         execute_sql(connection, insert_sql_from_csv("ticket", "ticket.csv"),'ticket')
