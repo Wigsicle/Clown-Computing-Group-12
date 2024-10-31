@@ -18,6 +18,9 @@ cd go/src/Hyperledger/fabric-samples/test-network
 
 - Deploy chaincode
 cd fabric-samples/asset-transfer-basic/chaincode-go
+You will need to cd into chaincode then nano smartcontract.go
+Copy the smartcontract.go inside of hyperledger-chaincode/smartcontract.go then save.
+cd .. and run below
 GO111MODULE=on go mod vendor
 cd ../../test-network
 export PATH=${PWD}/../bin:$PATH
@@ -47,7 +50,7 @@ peer lifecycle chaincode queryinstalled
 Copy the basic_1.0............ until the comma
 
 - Replace the basic_1.0..............................................
-export CC_PACKAGE_ID=[here] without the []
+export CC_PACKAGE_ID=basic_1.0:[here] without the []
 
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name basic --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 

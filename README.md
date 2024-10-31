@@ -25,10 +25,10 @@ pip install -r requirements.txt
     ```
 5. Update the migrations folder with the latest model changes and push the schema changes to your database
     ``` 
-    flask db migrate -m "initial migration"
+    flask db migrate -m "<migration message>"
     flask db upgrade 
     ```
-Whenever the models.py file gets updated, steps 4 will need to be rerun.
+Whenever the models.py file gets updated, step 5's two commands will need to be rerun.
 Sometimes, you may get a "target database out of date error". To fix this, run ``` flask db stamp head ``` then run step 5. 
 
 ### Run the Database Dummy Data Insertion Script
