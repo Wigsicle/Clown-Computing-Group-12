@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - Ensure you have Python interpreter installed. You can download and install Python from the official website: [python.org](https://www.python.org/downloads/).
+- Docker (You will need to enable Virtualisation in your BIOS)
 
 ## Installation
 
@@ -44,8 +45,9 @@ Once everything done, run the 'create_db.py' script to create the models, but yo
     ```docker-compose up```
 2. Start the Web Application by running app.py
 
-You might face issues where you need to rebuild your container image after docker-compose changes
-    ```
-    docker stop <container_id>
-    docker rm <container_id>
-    ```
+You might face issues where you need to rebuild your container image after docker-compose changes, 
+stop the container (if running) and then delete it.
+```
+docker stop <container_id>
+docker rm <container_id> 
+```
