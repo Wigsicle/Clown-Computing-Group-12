@@ -8,6 +8,7 @@ services:
   #     - MYSQL_DATABASE: ticket_hive
 
   db:
+    env_file: ".env"
     image: mariadb:latest
     container_name: ticket_hive_db
     environment:
@@ -18,7 +19,7 @@ services:
       # technically you won't need the local .env file 
       # if you're using this so don't change anything here
     ports:
-      - 3307:3306
+      - ${DB_PORT}:3306
     volumes:
       - ticket_hive_data:/var/lib/mysql # [volume name]:[directory in the container it is access by]
       - ticket_hive_logs:/var/log/mysql
