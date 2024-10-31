@@ -14,8 +14,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: ticket_hive
-      MYSQL_USER: root
-      MYSQL_PASSWORD: admin
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       # technically you won't need the local .env file 
       # if you're using this so don't change anything here
     ports:
