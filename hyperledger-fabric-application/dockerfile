@@ -1,0 +1,32 @@
+# Use the official Go image as the build environment
+FROM golang:1.22 AS builder
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the go.mod and go.sum files to the container
+COPY . /app
+
+# Download the Go modules
+RUN go mod download
+
+# Copy the source code into the container
+COPY . .
+
+# Build the Go app
+RUN CGO_ENABLED=0 GOOS=linux go build -o ticketTransfer .
+
+# Second stage: minimal image for running the application
+FROM alpine:latest
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/ticketTransfer .
+
+# Command to run the executable
+CMD ["./ticketTransfer"]
+
+# Expose the port if your app listens on a specific port (adjust as necessary)
+EXPOSE 50051

@@ -34,11 +34,11 @@ import (
 
 const (
 	mspID        = "Org1MSP"
-	cryptoPath   = "C:\\Users\\khooJ\\OneDrive\\Desktop\\Programming Workspace\\Clown-Computing-Group-12\\hyperledger-fabric-application" // Update to the new path
-	certPath     = cryptoPath + "/Org1/signcerts"                                                                                         // Adjusted for new path
-	keyPath      = cryptoPath + "/Org1/keystore"                                                                                          // Adjusted for new path
-	tlsCertPath  = cryptoPath + "/Org1/ca.crt"                                                                                            // Adjusted for new path
-	peerEndpoint = "dns:///localhost:7051"
+	cryptoPath   = "/app"                         // Update to the new path
+	certPath     = cryptoPath + "/Org1/signcerts" // Adjusted for new path
+	keyPath      = cryptoPath + "/Org1/keystore"  // Adjusted for new path
+	tlsCertPath  = cryptoPath + "/Org1/ca.crt"    // Adjusted for new path
+	peerEndpoint = "dns:///peer0.org1.example.com:7051"
 	gatewayPeer  = "peer0.org1.example.com"
 )
 
