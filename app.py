@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, g, session
 from flask_migrate import Migrate
 import os
 from db import db
@@ -31,6 +31,17 @@ migrate = Migrate(app, db)
 
 from models import User, Event, Ticket, Ticket_Listing
 
+@app.context_processor
+def inject_user():
+    return {'current_user': g.user}
+
+@app.before_request
+def load_logged_in_user():
+    user_email = session.get('user')
+    if user_email is None:
+        g.user = None
+    else:
+        g.user = User.query.filter_by(email=user_email).first()
 # Route for the homepage
 @app.route('/')
 def home():
@@ -95,40 +106,75 @@ def tickettransactionhistory():
 
 # Route for the ticket inventory page
 # List of user purchased ticket
-@app.route('/ticket_inventory')
+@app.route('/ticket_inventory', methods=['GET', 'POST'])
 def ticketinventory():
-    
-    user_email = session.get('user')
-    
-    if not user_email:
+    print(request.method)
+    if not g.user:
         return redirect(url_for('auth.signin'))
     
-    user = User.query.filter_by(email=user_email).first()
-    if not user:
-        return "User not found", 404  # Handling the case where the user is not found
+    if request.method == 'POST':
+        ticket_id = request.form['ticket_id']
+        selling_price = request.form['selling_price']
+        
+        ticket = Ticket.query.get(ticket_id)
+        if not ticket or ticket.owner_id != g.user.user_id:
+            return "Ticket not found", 404
+        
+        existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket_id, status='Available').first()
+        if existing_listing:
+            return redirect(url_for('resale_market'))
+        
+        new_listing = Ticket_Listing(
+            ticket_id=ticket_id,
+            seller_id=g.user.user_id,
+            sale_price_cents = ticket.ticket_price_cents,
+            status='Available'
+        )
+        
+        db.session.add(new_listing)
+        db.session.commit()
+        print(f"New listing created: {new_listing}")
+        
+        return redirect(url_for('resale_market'))
     
-    # Fetching tickets owned by the user
-    owned_tickets = user.tickets_owned 
+    if request.method == 'GET':
+        # Fetching tickets owned by the user
+        owned_tickets = g.user.tickets_owned 
+        print(f"Owned tickets: {[ticket.ticket_id for ticket in owned_tickets]}")
 
-    ticket_info = [{
-        "event_name": ticket.event.event_name,
-        "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-        "category": ticket.seat_category,
-        "price": ticket.get_price_str(),
-    } for ticket in owned_tickets]
+        """ticket_info = [{
+            "event_name": ticket.event.event_name,
+            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            "category": ticket.seat_category,
+            "price": ticket.get_price_str(),
+            "id": ticket.ticket_id
+        }   for ticket in owned_tickets]"""
+        
+        ticket_info = []
+        for ticket in owned_tickets:
+            ticket_data = {
+                "event_name": ticket.event.event_name,
+                "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                "category": ticket.seat_category,
+                "price": ticket.get_price_str(),
+                "id": ticket.ticket_id,
+            }
+            existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket.ticket_id, status='Available').first()
+            ticket_data['listing_status'] = 'Listed' if existing_listing else 'Not Listed'
+            ticket_info.append(ticket_data)
+    
+        print(ticket_info)
 
-    return render_template('ticket_inventory.html', tickets=ticket_info, user_email=user_email)
+        return render_template('ticket_inventory.html', tickets=ticket_info)
 
 # Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
-    user_email = session.get('user')
+    if not g.user:
+        return redirect(url_for('auth.signin'))
     
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
-    if not user_email:
-        return redirect(url_for('auth.signin'))
     
     available_tickets = Ticket_Listing.query.filter_by(status='Available')
     ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
@@ -154,6 +200,36 @@ def resale_market():
                            tickets=ticket_info,
                            total_pages=ticket_paginated.pages,
                            current_page=ticket_paginated.page)
+    
+@app.route('/sell_tickets', methods=['GET','POST'])
+def sell_tickets():
+    if not g.user:
+        return redirect(url_for('auth.signin'))
+    
+    ticket_id = request.form['ticket_id']
+    selling_price = request.form['selling_price']
+    
+    ticket = Ticket.query.get(ticket_id)
+    
+    if not ticket or ticket.owner_id != g.user.user_id:
+        return "Ticket not found", 404
+    
+    existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket_id).first()
+    if existing_listing:
+        return redirect(url_for('resale_market'))
+    
+    new_listing = Ticket_Listing(
+        ticket_id=ticket_id,
+        seller_id=g.user.user_id,
+        price=selling_price,
+        status='Available'
+    )
+    
+    db.session.add(new_listing)
+    db.session.commit()
+    print(new_listing)
+    
+    return render_template('resale_market.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
