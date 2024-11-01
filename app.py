@@ -14,6 +14,9 @@ if not os.getenv("DB_USERNAME"):
 
 DB_USER = os.getenv('DB_USERNAME')
 DB_PASS = os.getenv('DB_PASSWORD')
+DB_HOST = os.getenv('DB_HOST')
+DB_NAME = os.getenv('DB_NAME')
+DB_PORT = os.getenv('DB_PORT')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
@@ -21,7 +24,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 app.config['SESSION_PERMANENT'] = True
 
 app.register_blueprint(auth)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + DB_USER + ':' + DB_PASS + '@localhost/ticket_hive?charset=utf8mb4&collation=utf8mb4_general_ci'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + DB_USER + ':' + DB_PASS + '@' + DB_HOST + ':' + DB_PORT + '/' + DB_NAME + '?charset=utf8mb4&collation=utf8mb4_general_ci'
 
 db.init_app(app)
 migrate = Migrate(app, db)

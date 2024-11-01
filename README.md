@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - Ensure you have Python interpreter installed. You can download and install Python from the official website: [python.org](https://www.python.org/downloads/).
+- Docker (You will need to enable Virtualisation in your BIOS)
 
 ## Installation
 
@@ -39,3 +40,14 @@ In the event that you need to change the data, just change the respective table 
 ### Running the script ("OLD, MIGHT WORK, MAYBE." - DAN)
 Once everything done, run the 'create_db.py' script to create the models, but you need to create a schema in your mysql host first "ticket_hive"
 
+## Application Start Up
+1. Start up the docker database container
+    ```docker-compose up```
+2. Start the Web Application by running app.py
+
+You might face issues where you need to rebuild your container image after docker-compose changes, 
+stop the container (if running) and then delete it.
+```
+docker stop <container_id>
+docker rm <container_id> 
+```
