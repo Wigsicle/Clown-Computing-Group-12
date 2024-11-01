@@ -110,23 +110,35 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                        {% for ticket in tickets %}
-                                                                        <tr>
-                                                                            <td>{{ ticket.event_name }}</td>
-                                                                            <td>{{ ticket.event_datetime }}</td>
-                                                                            <td>{{ ticket.category }}</td>
-                                                                            <td>{{ ticket.price }}</td>
-                                                                            <td>
-                                                                                <a class="btn btn-primary" href="#" role="button">Edit</a>
-                                                                                <a class="btn btn-primary" href="#" role="button">Sell</a>
-                                                                            </td>
-                                                                        </tr>
-                                                                        {% else %}
-                                                                        <tr>
-                                                                            <td colspan="4">No tickets found</td>
-                                                                        </tr>
-                                                                        {% endfor %}
+                                                                        {% if tickets %}
+                                                                            {% for ticket in tickets %}
+                                                                                <tr>
+                                                                                    <td>{{ ticket.event_name }}</td>
+                                                                                    <td>{{ ticket.event_datetime }}</td>
+                                                                                    <td>{{ ticket.category }}</td>
+                                                                                    <td>{{ ticket.price }}</td>
+                                                                                    <td>
+                                                                                        {% if ticket.listing_status == 'Listed' %}
+                                                                                            <span class="status-listed">Listed</span>
+                                                                                        {% else %}
+                                                                                            <span class="status-not-listed">Not Listed</span>
+                                                                                        {% endif %}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <button class="btn btn-primary sell-ticket-btn" data-ticket-id="{{ ticket.id }}" data-ticket-price="{{ ticket.price }}" data-event-name="{{ ticket.event_name }}" data-event-datetime="{{ ticket.event_datetime }}">Sell Ticket</button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            {% endfor %}
+                                                                        {%else%}
+                                                                            <tr>
+                                                                                <td colspan="5">No tickets found</td>
+                                                                            </tr>
+                                                                        {% endif %}
+
+                                                                        
                                                                     </tbody>
+
+                                                                    
                                                                 </table>
                                                             </div>
                                                         </div>
@@ -239,6 +251,40 @@
             </div>
         </div>
     </footer>
+
+    <!-- Sell Ticket Modal -->
+    <div class="modal fade" id="sellTicketModal" tabindex="-1" role="dialog" aria-labelledby="sellTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sellTicketModalLabel">Sell Ticket</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="sellTicketForm" method="POST" action="{{ url_for('ticketinventory') }}">
+                        <input type="hidden" id="ticketId" name="ticket_id">
+                        <input type="hidden" id="ticketPrice" name="ticket_price">
+                        <div class="form-group">
+                            <label for="eventName">Event Name</label>
+                            <input type="text" class="form-control" id="eventName" name="event_name" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDatetime">Event Date & Time</label>
+                            <input type="datetime" class="form-control" id="eventDatetime" name="event_datetime" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketPrice">Ticket Price</label>
+                            <input type="text" class="form-control" id="ticketPrice" name="ticket_price" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sell Ticket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     
     
 
@@ -261,6 +307,25 @@
     <!-- Global Init -->
     <script src="static/js/custom.js"></script>
 
-  </body>
+    <script>
+        $(document).on('click', '.sell-ticket-btn', function() {
+            // Get ticket details
+            var ticketId = $(this).data('ticket-id');
+            var ticketPrice = $(this).data('ticket-price');
+            var eventName = $(this).data('event-name');
+            var eventDatetime = $(this).data('event-datetime');
+    
+            // Set values in modal
+            $('#ticketId').val(ticketId);
+            $('#ticketPrice').val(ticketPrice);
+            $('#eventName').val(eventName);
+            $('#eventDatetime').val(eventDatetime);
+    
+            // Update form action dynamically
+            $('#sellTicketModal').modal('show');
+        });
+    </script>
+
+</body>
 
 </html>
