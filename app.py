@@ -224,12 +224,18 @@ def resale_market():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    available_tickets = Ticket_Listing.query.filter_by(status='Available')
-    ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
+    available_tickets = Ticket_Listing.query.filter_by(status='Available').all()
+    
+    valid_listings = [
+        listing for listing in available_tickets
+        if listing.real_status == "Available"
+    ]
+    
+    ticket_paginated = valid_listings[(page - 1) * per_page: page * per_page]
     
     ticket_info = []
     
-    for listing in ticket_paginated.items:
+    for listing in ticket_paginated:
         ticket = listing.ticket
         if ticket and ticket.event:
             ticket_info.append({
@@ -238,6 +244,7 @@ def resale_market():
             "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
             "category": ticket.seat_category,
             "price": listing.get_price_str(),
+            "listing_status": listing.real_status
             
         #event = ticket.event
         
@@ -245,10 +252,12 @@ def resale_market():
             
     print(ticket_info)
     
+    total_pages = len(valid_listings) // per_page + (1 if len(valid_listings) % per_page > 0 else 0)
+    
     return render_template('resale_market.html',
                            tickets=ticket_info,
-                           total_pages=ticket_paginated.pages,
-                           current_page=ticket_paginated.page)
+                           total_pages=total_pages,
+                           current_page=page)
 
 # Route for event details page
 @app.route('/event_details/<int:id>')
