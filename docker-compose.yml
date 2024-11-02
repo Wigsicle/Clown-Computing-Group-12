@@ -12,7 +12,7 @@ services:
     image: mariadb:latest
     container_name: ticket_hive_db
     environment:
-      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: ${DB_ADMIN_PASSWORD}
       MYSQL_DATABASE: ticket_hive
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}

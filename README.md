@@ -15,22 +15,22 @@ pip install -r requirements.txt
 ## Setting up Project Database
 ### Setting Your Local Development Environments
 1. Create a .env file, following the variables in .env.example
-2. Set your local database username and password credentials in the env file
-(don't worry its not synced)
-3. Create a local MariaDB instance of the 'ticket_hive' 
+2. Set your database credentials in the env file (don't worry its not synced)
+If DB Container Access Port 3307 is taken, change it to another available port in your env 
+3. Start the database instance with ```docker-compose up```, ensure you have Docker Engine running
 
 ### Run the Flask-Migrate Schema migration script
-4. Initialise the migrations folder into your program, only do this if you DO NOT have the migrations/ folder in your flask app directory
+4. Initialise the migrations folder into your program, if you DO NOT have the migrations/ folder in your flask app directory
     ``` 
     flask db init 
     ```
+    If you have an existing migrations folder, run ``` flask db stamp head ```
 5. Update the migrations folder with the latest model changes and push the schema changes to your database
     ``` 
     flask db migrate -m "<migration message>"
     flask db upgrade 
     ```
-Whenever the models.py file gets updated, step 5's two commands will need to be rerun.
-Sometimes, you may get a "target database out of date error". To fix this, run ``` flask db stamp head ``` then run step 5. 
+Whenever the models.py file gets updated, step 5's two commands will need to be rerun to do a migration.
 
 ### Run the Database Dummy Data Insertion Script
 6. Run insert_script.py in dummy_insert folder

@@ -27,6 +27,8 @@ def retrieve_env_vars(path:str) -> dict[str,str]:
     '''
     
     load_dotenv(path)
+    if not os.getenv("DB_USERNAME"): # run a check if the .env file can be accessed
+        raise RuntimeError("You have not set your local .env variables yet. Please refer to README\n")
     env_variables:dict = {}
     env_variables['username'] = os.getenv('DB_USERNAME')
     env_variables['password'] = os.getenv('DB_PASSWORD')
@@ -107,8 +109,6 @@ def update_missing_values(table_name:str, csv_file_path:str, col_name:list[str])
 if __name__ == '__main__':
     print("ticket_hive Database Insertion Script")
     print("Getting environment variables")
-    if not os.getenv("DB_USERNAME"):
-        raise RuntimeError("You have not set your local .env variables yet. Please refer to README\n")
 
     
     db_vars:dict = retrieve_env_vars('../.env')
