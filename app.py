@@ -201,24 +201,10 @@ def resale_market():
                            current_page=ticket_paginated.page)
 
 # Route for event details page
-@app.route('/event_details/<int:id>')
-def eventdetails(id):
-    ticket_detail = Ticket_Listing.query.filter_by(listing_id=id)
+@app.route('/event_details')
+def eventdetails():
 
-    event_info = []
-
-    for listing in ticket_detail:
-        ticket = listing.ticket
-        event_info.append({
-            "event_name": ticket.event.event_name,
-            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-            "event_location": ticket.event.location,
-            "event_description": ticket.event.description,
-            "event_image": ticket.event.event_image, 
-            "price":listing.get_price_str(),
-        })
-
-    return render_template('event_details.html', events=event_info)
+    return render_template('event_details.html')
 
 # Route for user purchase ticket
 @app.route('/purchase_ticket', methods=['POST'])

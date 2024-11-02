@@ -53,33 +53,31 @@
     <div class="ticket-details-page">
         <div class="container">
             <div class="row">
-                {% for event in events %}
                 <div class="col-lg-8">
                     <div class="left-image">
-                        <img src="{{ url_for('static', filename=event.event_image) }}" alt="" width="769" height="570">
+                        <img src="static/images/ticket-details.jpg" alt="" width="769" height="570">
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="right-content">
-                        <h4>{{ event.event_name }}</h4>
-                        <span>{{ event.event_description }}</span>
+                        <h4> Event Name</h4>
+                        <span> This is the details</span>
                         <ul>
-                            <li><i class="fa fa-clock-o"></i> {{ event.event_datetime }}</li>
-                            <li><i class="fa fa-map-marker"></i>{{ event.event_location }}</li>
+                            <li><i class="fa fa-clock-o"></i> 02/11/24 & 2248h</li>
+                            <li><i class="fa fa-map-marker"></i>Location</li>
                         </ul>
                         <div class="quantity-content">
                             <div class="left-content">
-                                <h6>Standard Ticket</h6>
-                                <p>{{ event.price }} per ticket</p>
+                                <h6>Category</h6>
+                                <p>VIP</p>
                             </div>
                             <div class="right-content">
-                                <div class="quantity buttons_added">
-                                    <input type="button" value="-" class="minus" disabled><input type="number" step="1" min="1" max="" name="quantity" value="1" title="Qty" class="input-text qty text" size="4" pattern="" inputmode="" disabled><input type="button" value="+" class="plus" disabled>
-                                </div>
+                                <h6>Seat No.</h6>
+                                <p>35C</p>
                             </div>
                         </div>
                         <div class="total">
-                            <h4>Total: {{ event.price }}</h4>
+                            <h4>Total: $10</h4>
                             <div class="main-dark-button">
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#buyModalCenter">
                                     Purchase Ticket
@@ -88,7 +86,6 @@
                         </div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -204,7 +201,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <form method="POST" action="{{ url_for('purchaseticket') }}">
-                        <button type="submit" class="btn btn-primary">Yes</button>
+                        <button type="submit" class="btn btn-primary">Confirm</button>
                     </form>
                 </div>
             </div>
