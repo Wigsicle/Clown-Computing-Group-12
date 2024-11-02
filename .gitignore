@@ -10,3 +10,5 @@ htmlcov/
 docs/_build/
 .env
 migrations/
+./hyperledger-fabric-application/Org1
+./hyperledger-fabric-application/Org2
