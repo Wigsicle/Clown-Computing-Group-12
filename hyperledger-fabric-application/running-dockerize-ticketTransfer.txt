@@ -11,15 +11,6 @@ Once pulled put Org1 back inside
 
 If you didn't do this then you will need to go and copy the certs again. Follow instructions in readme.txt
 ------------------------------
-In /hyperledger-fabric-application
-Open the docker-compose.yaml
-Modify the line image: ticket-transfer-app
-to image: wigsicle/ticket-transfer-app
-this will pull image: wigsicle/ticket-transfer-app from docker hub
-then save
-
-Open another terminal in the same directory
-
 In terminal 1 run:
 In /hyperledger-fabric-application
 docker-compose up --build
