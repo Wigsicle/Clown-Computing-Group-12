@@ -3,7 +3,7 @@ syntax = "proto3";
 package ticket;
 
 // Specify the Go package path
-option go_package = "./;ticket";
+option go_package = "./ticket;ticket";
 
 service Ticket {
   rpc ReadTicketById (ReadTicketByIdRequest) returns (ReadTicketByIdReply);

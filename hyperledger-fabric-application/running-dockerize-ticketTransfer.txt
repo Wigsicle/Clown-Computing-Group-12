@@ -1,0 +1,33 @@
+Install these
+Docker Desktop, Python, gRPC for Python
+
+------------------------------
+The blockchain must be running
+------------------------------
+
+Please copy out your Org1 folder before pulling
+
+Once pulled put Org1 back inside
+
+If you didn't do this then you will need to go and copy the certs again. Follow instructions in readme.txt
+------------------------------
+In terminal 1 run:
+In /hyperledger-fabric-application
+docker-compose up --build
+(It's a server so yes it will look like below)
+
+ticket-transfer-app-container  |
+ticket-transfer-app-container  | --> Submit Transaction: InitLedger, function creates the initial set of tickets on the ledger
+ticket-transfer-app-container  | *** Transaction committed successfully
+ticket-transfer-app-container  | 2024/11/01 19:17:42 Server is running on port :50051
+
+In terminal 2 run:
+In /hyperledger-fabric-application
+python gRPC-Client-Example.py
+(This is the Client code that will run on app.py and the return should look like below)
+Ticket Info for ID ticket4: {"TicketID":"ticket4","EventName":"Taylor Swift Eras Tour","TicketCategory":"CAT 3","Owner":"Default","SeatNumber":"12D"}
+Transfer Ticket Success: True
+Updated Ticket Info for ID ticketId: "ticket4"
+: {"TicketID":"ticket4","EventName":"Taylor Swift Eras Tour","TicketCategory":"CAT 3","Owner":"Jake","SeatNumber":"12D"}
+
+If you get any other error then most likely your blockchain is not set up properly or missing gRPC dependencies (most likely Python gRPC stuff)

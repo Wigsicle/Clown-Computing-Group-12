@@ -13,29 +13,44 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	pb "hyperledger-fabric-application/ticket"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
 const (
 	mspID        = "Org1MSP"
-	cryptoPath   = "C:/Users/Wigsicle/Desktop/Hyperledger" // Update to the new path
-	certPath     = cryptoPath + "/Org1/signcerts"          // Adjusted for new path
-	keyPath      = cryptoPath + "/Org1/keystore"           // Adjusted for new path
-	tlsCertPath  = cryptoPath + "/Org1/ca.crt"             // Adjusted for new path
-	peerEndpoint = "dns:///localhost:7051"
+	cryptoPath   = "/app"                         // Update to the new path
+	certPath     = cryptoPath + "/Org1/signcerts" // Adjusted for new path
+	keyPath      = cryptoPath + "/Org1/keystore"  // Adjusted for new path
+	tlsCertPath  = cryptoPath + "/Org1/ca.crt"    // Adjusted for new path
+	peerEndpoint = "dns:///peer0.org1.example.com:7051"
 	gatewayPeer  = "peer0.org1.example.com"
 )
+
+type server struct {
+	pb.TicketServer
+	contract *client.Contract // Add a contract field to access the contract methods
+}
+
+// NewServer creates a new server with a contract.
+func NewServer(contract *client.Contract) *server {
+	return &server{contract: contract}
+}
 
 var now = time.Now()
 var assetId = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
@@ -80,25 +95,52 @@ func main() {
 	contract := network.GetContract(chaincodeName)
 
 	initLedger(contract)
-	// GetAlltickets(contract)
-	// createticket(contract, "Bring Me The Horizon", "Cat 1", "Richard", "322")
-	// readticketByID(contract, "ticket6")
-	// readticketByID(contract, "ticket7")
-	test, err := readticketByID(contract, "ticket6")
-	fmt.Printf(test)
-	// test2, err := readticketByID(contract, "ticket7")
-	// fmt.Printf(test2)
-	// // transferticketAsync(contract, "ticket6", "Joel")
-	test3, err := transferticketAsync(contract, "ticket6", "Joel")
-	fmt.Printf("\n%t\n", test3)
-	// GetAlltickets(contract)
-	// test4, err := transferticketAsync(contract, "ticket7", "Sam")
-	// fmt.Printf("\n%t\n", test4)
-	// exampleErrorHandling(contract)
-	// deleteTicket(contract, "asset1729966479242")
-	GetAlltickets(contract)
-	test4, err := transferticketAsync(contract, "ticket6", "Jun Ye")
-	fmt.Printf("\n%t\n", test4)
+
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterTicketServer(s, NewServer(contract)) // Register the correct service
+	log.Printf("Server is running on port :50051")
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+// Implement ReadTicketById method to handle the request from the client
+func (s *server) ReadTicketById(ctx context.Context, req *pb.ReadTicketByIdRequest) (*pb.ReadTicketByIdReply, error) {
+	ticketID := req.GetTicketId()
+
+	// Call the contract's EvaluateTransaction to get the ticket details
+	result, err := s.contract.EvaluateTransaction("ReadTicket", ticketID)
+	if err != nil {
+		if strings.Contains(err.Error(), "does not exist") {
+			return nil, status.Errorf(codes.NotFound, "Ticket with ID %s does not exist", ticketID)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to evaluate transaction: %v", err)
+	}
+
+	// Prepare the response
+	response := &pb.ReadTicketByIdReply{
+		TicketInfo: string(result),
+	}
+	return response, nil
+}
+
+// Implement TransferTicket method to handle the transfer request from the client
+func (s *server) TransferTicket(ctx context.Context, req *pb.TransferTicketRequest) (*pb.TransferTicketReply, error) {
+	ticketID := req.GetTicketId()
+	newOwner := req.GetNewOwner()
+
+	// Call the contract's SubmitTransaction to transfer the ticket ownership
+	_, err := s.contract.SubmitTransaction("TransferTicket", ticketID, newOwner)
+	if err != nil {
+		return &pb.TransferTicketReply{Success: false}, status.Errorf(codes.Internal, "failed to transfer ticket: %v", err)
+	}
+
+	// Return success response
+	return &pb.TransferTicketReply{Success: true}, nil
 }
 
 // newGrpcConnection creates a gRPC connection to the Gateway server.
