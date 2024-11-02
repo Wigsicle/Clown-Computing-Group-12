@@ -185,6 +185,7 @@ def resale_market():
         ticket = listing.ticket
         if ticket and ticket.event:
             ticket_info.append({
+            "listing_id": listing.listing_id,
             "event_name": ticket.event.event_name,
             "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
             "category": ticket.seat_category,
@@ -200,6 +201,32 @@ def resale_market():
                            tickets=ticket_info,
                            total_pages=ticket_paginated.pages,
                            current_page=ticket_paginated.page)
+
+# Route for event details page
+@app.route('/event_details/<int:id>')
+def eventdetails(id):
+    ticket_detail = Ticket_Listing.query.filter_by(listing_id=id)
+
+    event_info = []
+
+    for listing in ticket_detail:
+        ticket = listing.ticket
+        event_info.append({
+            "event_name": ticket.event.event_name,
+            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+            "event_location": ticket.event.location,
+            "event_description": ticket.event.description,
+            "event_image": ticket.event.event_image, 
+            "price":listing.get_price_str(),
+        })
+
+    return render_template('event_details.html', events=event_info)
+
+# Route for user purchase ticket
+@app.route('/purchase_ticket', methods=['POST'])
+def purchaseticket():
+
+    return redirect(url_for('resale_market'))
     
 @app.route('/sell_tickets', methods=['GET','POST'])
 def sell_tickets():
