@@ -10,6 +10,11 @@ COPY . /app
 # Download the Go modules
 RUN go mod download
 
+# Copy the certificate and keys into the image
+COPY Org1/ca.crt /app/Org1/ca.crt
+COPY Org1/signcerts/User1@org1.example.com-cert.pem /app/Org1/signcerts/User1@org1.example.com-cert.pem
+COPY Org1/keystore/priv_sk /app/Org1/keystore/priv_sk
+
 # Copy the source code into the container
 COPY . .
 

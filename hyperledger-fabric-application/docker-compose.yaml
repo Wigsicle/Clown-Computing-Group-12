@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ticket-transfer-app
+    image: wigsicle/ticket-transfer-app
     container_name: ticket-transfer-app-container
     ports:
       - "50051:50051"
