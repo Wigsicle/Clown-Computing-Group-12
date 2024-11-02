@@ -8,11 +8,15 @@ dist/
 htmlcov/
 .tox/
 docs/_build/
+
+# your local dev environment files
 .env
+
+# database schema migration folder
 migrations/
-hyperledger-fabric-application/Org1/ca.crt
-hyperledger-fabric-application/Org2/keystore/priv_sk
-hyperledger-fabric-application/Org2/signcerts/User1@org2.example.com-cert.pem
-hyperledger-fabric-application/Org2/ca.crt
-hyperledger-fabric-application/Org1/signcerts/User1@org1.example.com-cert.pem
-hyperledger-fabric-application/Org1/keystore/priv_sk
+
+# hyperledger folders generated during the BC creation process
+hyperledger-fabric-application/Org1
+hyperledger-fabric-application/Org2
+
+
