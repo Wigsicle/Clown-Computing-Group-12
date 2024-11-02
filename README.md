@@ -41,12 +41,14 @@ Data: Edit the csv file that matches the table and then re-run step 6.
 
 ## Application Start Up
 1. Start up the docker database container
-    ```docker-compose up```
+    ```docker-compose up --build```
 2. Start the Web Application by running app.py
 
 You might face issues where you need to rebuild your container image after docker-compose changes, 
 stop the container (if running) and then delete it.
 ```
 docker stop <container_id>
-docker rm <container_id> 
+docker rm <container_id>
+
+docker-compose down (this will close down all the containers the docker-compose created)
 ```
