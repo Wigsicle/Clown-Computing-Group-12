@@ -35,10 +35,9 @@ Whenever the models.py file gets updated, step 5's two commands will need to be 
 ### Run the Database Dummy Data Insertion Script
 6. Run insert_script.py in dummy_insert folder
 
-In the event that you need to change the data, just change the respective table csv files.
-
-### Running the script ("OLD, MIGHT WORK, MAYBE." - DAN)
-Once everything done, run the 'create_db.py' script to create the models, but you need to create a schema in your mysql host first "ticket_hive"
+### Changing Database Stuff 
+Schema (Tables and Columns): Step 5
+Data: Edit the csv file that matches the table and then re-run step 6.
 
 ## Application Start Up
 1. Start up the docker database container
