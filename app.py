@@ -190,10 +190,8 @@ def resale_market():
             "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
             "category": ticket.seat_category,
             "price": listing.get_price_str(),
-            
-        #event = ticket.event
-        
-        })
+            #event = ticket.event
+            })
             
     print(ticket_info)
     

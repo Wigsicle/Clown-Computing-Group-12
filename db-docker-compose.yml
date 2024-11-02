@@ -1,3 +1,4 @@
+# this file is to be removed after testing please do not invoke this file during startup
 services:
   # app:
   #   # app service definition
