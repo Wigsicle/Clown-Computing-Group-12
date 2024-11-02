@@ -33,7 +33,7 @@ If DB Container Access Port 3307 is taken, change it to another available port i
 Whenever the models.py file gets updated, step 5's two commands will need to be rerun to do a migration.
 
 ### Run the Database Dummy Data Insertion Script
-6. Run insert_script.py in dummy_insert folder
+6. Run insert_script.py to insert data into the 4 tables
 
 ### Changing Database Stuff 
 Schema (Tables and Columns): Step 5
