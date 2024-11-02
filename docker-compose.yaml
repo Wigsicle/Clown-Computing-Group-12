@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  ticket-transfer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wigsicle/ticket-transfer-app
+    container_name: ticket-transfer-app-container
+    ports:
+      - "50051:50051"
+    volumes:
+      - type: bind
+        source: ./hyperledger-fabric-application/Org1/ca.crt
+        target: /app/Org1/ca.crt
+      - type: bind
+        source: ./hyperledger-fabric-application/Org1/signcerts/User1@org1.example.com-cert.pem
+        target: /app/Org1/signcerts/User1@org1.example.com-cert.pem
+      - type: bind
+        source: ./hyperledger-fabric-application/Org1/keystore/priv_sk
+        target: /app/Org1/keystore/priv_sk
+    environment:
+      - MSP_ID=Org1MSP
+      - CRYPTO_PATH=/app
+      - CERT_PATH=signcerts/User1@org1.example.com-cert.pem
+      - KEY_PATH=keystore/priv_sk
+      - TLS_CERT_PATH=ca.crt
+      - PEER_ENDPOINT=dns:///peer0.org1.example.com:7051
+      - GATEWAY_PEER=peer0.org1.example.com
+    command: ["/app/hyperledger-fabric-application/ticketTransfer"]
+  db:
+    env_file: ".env"
+    image: mariadb:latest
+    container_name: ticket_hive_db
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: ticket_hive
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      # technically you won't need the local .env file 
+      # if you're using this so don't change anything here
+    ports:
+      - ${DB_PORT}:3306
+    volumes:
+      - ticket_hive_data:/var/lib/mysql # [volume name]:[directory in the container it is access by]
+      - ticket_hive_logs:/var/log/mysql
+
+volumes:
+  ticket_hive_data:
+      #driver: local
+      # this is where it will store the database data
+  ticket_hive_logs:
+      #driver: local
+
+
+networks:
+  default:
+    external:
+      name: fabric_test
