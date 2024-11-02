@@ -6,6 +6,12 @@ from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
 import transaction_history
+import threading
+import queue
+import time
+import atexit
+import logging
+
 
 load_dotenv()
 
@@ -31,6 +37,42 @@ migrate = Migrate(app, db)
 
 from models import User, Event, Ticket, Ticket_Listing
 
+task_queue = queue.Queue()
+
+def consumer():
+    while True:
+        task = task_queue.get()
+        if task is None:
+            break
+        
+        try:
+            process_task(task)
+        except Exception as e:
+            print(f"Error processing task: {e}")
+        finally:
+            task_queue.task_done()
+            
+def process_task(task):
+    ticket_id, ticket_price_str, user_id = task
+    
+    with app.app_context():
+        ticket_price_str = ticket_price_str.replace('$', '').replace(',', '').strip()
+        ticket_price_cents = int(float(ticket_price_str) * 100)
+        ticket_listing = Ticket_Listing(
+            ticket_id=ticket_id,
+            seller_id=user_id,
+            sale_price_cents=ticket_price_cents,
+            status = 'Available'
+        )
+        
+        db.session.add(ticket_listing)
+        db.session.commit()
+        
+consumer_thread = threading.Thread(target=consumer)
+consumer_thread.daemon = True
+consumer_thread.start()
+
+    
 @app.context_processor
 def inject_user():
     return {'current_user': g.user}
@@ -108,13 +150,15 @@ def tickettransactionhistory():
 # List of user purchased ticket
 @app.route('/ticket_inventory', methods=['GET', 'POST'])
 def ticketinventory():
-    print(request.method)
     if not g.user:
         return redirect(url_for('auth.signin'))
     
     if request.method == 'POST':
-        ticket_id = request.form['ticket_id']
-        selling_price = request.form['selling_price']
+        ticket_id = request.form.get('ticket_id')
+        selling_price = request.form.get('selling_price')
+        
+        if not ticket_id or not selling_price:
+            return "Invalid request", 400
         
         ticket = Ticket.query.get(ticket_id)
         if not ticket or ticket.owner_id != g.user.user_id:
@@ -124,16 +168,20 @@ def ticketinventory():
         if existing_listing:
             return redirect(url_for('resale_market'))
         
-        new_listing = Ticket_Listing(
+        task_queue.put((ticket_id, selling_price, g.user.user_id))
+        
+        logging.info(f"Task added to queue: {ticket_id}, {selling_price}, {g.user.user_id}")
+        
+        """new_listing = Ticket_Listing(
             ticket_id=ticket_id,
             seller_id=g.user.user_id,
             sale_price_cents = ticket.ticket_price_cents,
             status='Available'
-        )
+        )"""
         
-        db.session.add(new_listing)
+        """db.session.add(new_listing)
         db.session.commit()
-        print(f"New listing created: {new_listing}")
+        print(f"New listing created: {new_listing}")"""
         
         return redirect(url_for('resale_market'))
     
@@ -257,6 +305,15 @@ def sell_tickets():
     print(new_listing)
     
     return render_template('resale_market.html')
+    
+    
+def shutdown_consumer():
+    task_queue.put(None)
+    consumer_thread.join(timeout=10)
+atexit.register(shutdown_consumer)
+
+logging.basicConfig(level=logging.INFO)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
