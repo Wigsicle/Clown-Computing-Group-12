@@ -289,8 +289,9 @@ def add_ticket():
         # Call the gRPC method
         response = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
             
-        # Get the string from the Go GRPC server
+        # Get the string from the gRPC response and parse it as JSON
         ticket_info_string = response.ticketInfo
+        ticket_info_dict = json.loads(ticket_info_string)
             
         # Parse the JSON string to a dictionary
         ticket_info_dict = json.loads(ticket_info_string)
@@ -301,10 +302,19 @@ def add_ticket():
         print(ticket_info_dict['HashVal']) #the hash value within the blockchain
         print(hashed_passkey)    #the hashed_passkey is not matching the one in the blockchain.
 
-        # Verify the HashVal against the hashed_passkey
-        if ticket_info_dict['HashVal'] == hashed_passkey:
-            # If the hashes match, return the ticket information with status 'found'
-            return jsonify({'status': 'found', 'ticket_info': ticket_info_dict})
+        # Check the hashed passkey against the stored HashVal
+        if ticket_info_dict.get('HashVal') == hashed_passkey:
+            # Prepare the data structure for the front end
+            return jsonify({
+                'status': 'found',
+                'ticket_info': {
+                    'ticket_id': ticket_info_dict.get('TicketID', 'N/A'),
+                    'event_name': ticket_info_dict.get('EventName', 'N/A'),
+                    'category': ticket_info_dict.get('TicketCategory', 'N/A'),
+                    'seat_number': ticket_info_dict.get('SeatNumber', 'N/A'),
+                    'owner_id': ticket_info_dict.get('OwnerID', 'N/A')
+                }
+            })
         else:
             # If the hashes do not match, return not found status
             return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'}), 404
@@ -321,7 +331,7 @@ def confirm_add_ticket():
     guid = data.get('guid')
 
     # Simulate ticket addition logic here
-    # Update database or call another gRPC service if needed
+
 
     return jsonify({'status': 'success', 'message': 'Ticket added to user inventory'})
 

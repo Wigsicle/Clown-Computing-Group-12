@@ -387,12 +387,12 @@
                 const confirmAddButton = document.getElementById('confirmAddButton');
 
                 if (data.status === 'found') {
-                    // Display ticket information
+                    // Format ticket information for display
                     const info = `
-                        <strong>Event:</strong> ${data.ticket_info.event_name}<br>
-                        <strong>Date:</strong> ${data.ticket_info.event_datetime}<br>
+                        <strong>Event Name:</strong> ${data.ticket_info.event_name}<br>
+                        <strong>Ticket ID:</strong> ${data.ticket_info.ticket_id}<br>
                         <strong>Category:</strong> ${data.ticket_info.category}<br>
-                        <strong>Price:</strong> ${data.ticket_info.price}
+                        <strong>Seat Number:</strong> ${data.ticket_info.seat_number}<br>
                     `;
                     ticketInfo.innerHTML = info;
                     ticketResult.style.display = 'block';
