@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session
+from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify
 from flask_migrate import Migrate
 import os
 from db import db
@@ -6,6 +6,11 @@ from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
 import transaction_history
+
+import grpc
+import hashlib  # Import hashlib for SHA-256 hashing
+import Ticket_pb2 as TicketStub  # Import the generated message classes
+import Ticket_pb2_grpc as ReadTicketByIdRequest  # Import the generated gRPC classes
 
 load_dotenv()
 
@@ -258,29 +263,58 @@ def sell_tickets():
     
     return render_template('resale_market.html')
 
-@app.route('/add_ticket', methods=['GET', 'POST'])
+@app.route('/add_ticket', methods=['POST'])
 def add_ticket():
     if request.method == 'POST':
-        guid = request.form.get('guid')
-        
-        # Create gRPC request
-        request = CheckTicketRequest(guid=guid)
-        
-        try:
-            # Call the gRPC method
-            response = ticket_service.CheckTicket(request)
-            
-            if response.ticket_info:
-                # Ticket exists in blockchain; prompt user for confirmation
-                return jsonify({'status': 'found', 'ticket_info': response.ticket_info})
-            else:
-                # Ticket does not exist
-                return jsonify({'status': 'not_found', 'message': 'Ticket not found'})
-        except grpc.RpcError as e:
-            # Handle gRPC errors
-            return jsonify({'status': 'error', 'message': 'Error checking ticket GUID'})
+        data = request.get_json()
+        guid = data.get('guid')
+        passkey = data.get('passkey')
 
-    return render_template('add_ticket.html')
+        if not guid or not passkey:
+            return jsonify({'status': 'error', 'message': 'GUID and passkey are required'}), 400
+
+        # Hash the passkey with SHA-256
+        hashed_passkey = hashlib.sha256(passkey.encode()).hexdigest()
+
+        # Initialize gRPC channel and stub
+        with grpc.insecure_channel('localhost:50051') as channel:
+            stub = TicketStub(channel)
+
+            # Create request for ReadTicketById
+            read_ticket_request = ReadTicketByIdRequest(ticketId=guid, passkey=hashed_passkey)
+
+            try:
+                # Call the gRPC method
+                response = stub.ReadTicketById(read_ticket_request)
+
+                if response.ticketInfo:
+                    # If ticket exists, return ticket information in JSON format
+                    ticket_info = {
+                        'event_name': response.ticketInfo.event_name,
+                        'event_datetime': response.ticketInfo.event_datetime,
+                        'category': response.ticketInfo.category,
+                        'price': response.ticketInfo.price
+                    }
+                    return jsonify({'status': 'found', 'ticket_info': ticket_info})
+                else:
+                    # If ticket does not exist or passkey is incorrect
+                    return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'})
+            except grpc.RpcError as e:
+                # Handle gRPC errors
+                return jsonify({'status': 'error', 'message': f'RPC failed with status code {e.code()}: {e.details()}'})
+            
+@app.route('/confirm_add_ticket', methods=['POST'])
+def confirm_add_ticket():
+    data = request.get_json()
+    guid = data.get('guid')
+
+    # Implement logic to add the ticket to the user's inventory
+    # This might involve updating your database or making another gRPC call
+
+    # For now, we'll assume it's successful
+    return jsonify({'status': 'success'})
+
+            
 
 if __name__ == '__main__':
     app.run(debug=True)

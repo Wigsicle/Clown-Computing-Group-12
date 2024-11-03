@@ -290,30 +290,40 @@
     <div class="modal fade" id="addTicketModal" tabindex="-1" role="dialog" aria-labelledby="addTicketModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
+                <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title" id="addTicketModalLabel">Add Ticket</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
+
+                <!-- Modal Body -->
                 <div class="modal-body">
+                    <!-- Ticket Search Form -->
                     <form id="addTicketForm">
                         <div class="form-group">
-                            <label for="guid">Enter Ticket GUID:</label>
-                            <input type="text" class="form-control" id="guid" name="guid" placeholder="Enter GUID" required>
+                            <label for="guid">Enter Ticket ID:</label>
+                            <input type="text" class="form-control" id="guid" name="guid" placeholder="Your Ticket ID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="passkey">Enter Passkey:</label>
+                            <input type="password" class="form-control" id="passkey" name="passkey" placeholder="Your Passkey" required>
                         </div>
                         <button type="button" class="btn btn-primary mt-2" onclick="searchTicket()">Search Ticket</button>
                     </form>
-                    
-                    <!-- Display result -->
+
+                    <!-- Ticket Result Display -->
                     <div id="ticketResult" class="mt-4" style="display: none;">
                         <p id="ticketInfo"></p>
-                        <button class="btn btn-success" onclick="confirmAddTicket()">Confirm Add to Inventory</button>
+                        <!-- Confirm Button (Initially Hidden) -->
+                        <button id="confirmAddButton" class="btn btn-success" style="display: none;" onclick="confirmAddTicket()">Confirm Add to Inventory</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     
 
     <!-- jQuery -->
@@ -356,35 +366,63 @@
 
         // Add Ticket Script
         function searchTicket() {
-        const guid = document.getElementById('guid').value;
+            const guid = document.getElementById('guid').value;
+            const passkey = document.getElementById('passkey').value;
 
-        fetch('/add_ticket', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ guid })
-        })
-        .then(response => response.json())
-        .then(data => {
-            const ticketResult = document.getElementById('ticketResult');
-            const ticketInfo = document.getElementById('ticketInfo');
-
-            if (data.status === 'found') {
-                ticketInfo.textContent = `Ticket Found: ${data.ticket_info}`;
-                ticketResult.style.display = 'block';
-            } else {
-                ticketInfo.textContent = 'Ticket not found';
-                ticketResult.style.display = 'block';
+            // Ensure both fields are filled
+            if (!guid || !passkey) {
+                alert('Please enter both Ticket ID and Passkey.');
+                return;
             }
-        })
-        .catch(error => console.error('Error:', error));
-    }
 
-    function confirmAddTicket() {
-        // Logic to confirm addition of the ticket to inventory
-        alert('Ticket successfully added to inventory');
-        $('#addTicketModal').modal('hide');
-    }
+            fetch('/add_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guid, passkey })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const ticketResult = document.getElementById('ticketResult');
+                const ticketInfo = document.getElementById('ticketInfo');
+                const confirmAddButton = document.getElementById('confirmAddButton');
 
+                if (data.status === 'found') {
+                    // Display ticket information
+                    const info = `
+                        <strong>Event:</strong> ${data.ticket_info.event_name}<br>
+                        <strong>Date:</strong> ${data.ticket_info.event_datetime}<br>
+                        <strong>Category:</strong> ${data.ticket_info.category}<br>
+                        <strong>Price:</strong> ${data.ticket_info.price}
+                    `;
+                    ticketInfo.innerHTML = info;
+                    ticketResult.style.display = 'block';
+                    confirmAddButton.style.display = 'inline-block'; // Show confirm button
+                } else {
+                    // Display error message without confirm button
+                    ticketInfo.textContent = data.message || 'Ticket not found or passkey incorrect';
+                    ticketResult.style.display = 'block';
+                    confirmAddButton.style.display = 'none'; // Hide confirm button
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while searching for the ticket.');
+            });
+        }
+
+        function confirmAddTicket() {
+            // Logic to confirm addition of the ticket to inventory
+            // You might need to send a request to the server to actually add the ticket
+            alert('Ticket successfully added to inventory');
+            $('#addTicketModal').modal('hide');
+        }
+
+        function resetAddTicketModal() {
+            // Reset the modal fields and hide the result section when the modal is closed
+            document.getElementById('addTicketForm').reset();
+            document.getElementById('ticketResult').style.display = 'none';
+            document.getElementById('confirmAddButton').style.display = 'none';
+        }
     </script>
 
 </body>
