@@ -113,7 +113,7 @@
                                                                             <td>{{ ticket.price }}</td>
                                                                             <td>   
                                                                                 <div class="main-dark-button">
-                                                                                    <a href="/event_details/{{ ticket.listing_id }}">View</a>
+                                                                                    <a href="{{ url_for('listing_details', id=ticket.listing_id)}}">View</a>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
