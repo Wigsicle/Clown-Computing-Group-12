@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, g, session, flash
+from flask import Flask, render_template, request, redirect, url_for, g, session, flash
 from flask_migrate import Migrate
 import os
 from db import db
@@ -6,6 +7,11 @@ from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta, datetime
 import transaction_history
+
+import grpc
+from Ticket_pb2_grpc import TicketStub
+from Ticket_pb2 import ReadTicketByIdRequest, TransferTicketRequest
+
 
 load_dotenv()
 
@@ -167,21 +173,26 @@ def ticketinventory():
 
         return render_template('ticket_inventory.html', tickets=ticket_info)
 
-# Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
     if not g.user:
         return redirect(url_for('auth.signin'))
-    
+
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
-    available_tickets = Ticket_Listing.query.filter_by(status='Available')
-    ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
-    
+
+    available_tickets = Ticket_Listing.query.filter_by(status='Available').all()
+
+    valid_listings = [
+        listing for listing in available_tickets
+        if listing.real_status == "Available"
+    ]
+
+    ticket_paginated = valid_listings[(page - 1) * per_page: page * per_page]
+
     ticket_info = []
-    
-    for listing in ticket_paginated.items:
+
+    for listing in ticket_paginated:
         ticket = listing.ticket
         if ticket and ticket.event:
             ticket_info.append({
@@ -190,15 +201,20 @@ def resale_market():
             "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
             "category": ticket.seat_category,
             "price": listing.get_price_str(),
-            #event = ticket.event
-            })
-            
+            "listing_status": listing.real_status
+
+        #event = ticket.event
+
+        })
+
     print(ticket_info)
-    
+
+    total_pages = len(valid_listings) // per_page + (1 if len(valid_listings) % per_page > 0 else 0)
+ 
     return render_template('resale_market.html',
-                           tickets=ticket_info,
-                           total_pages=ticket_paginated.pages,
-                           current_page=ticket_paginated.page)
+                            tickets=ticket_info,
+                            total_pages=total_pages,
+                            current_page=page)
 
 # Route for event details page
 @app.route('/listing/<int:id>')
@@ -227,6 +243,10 @@ def listing_details(id):
 
     return render_template('listing_details.html',event_info=event_info,ticket_info=ticket_info)
 
+# Initialize gRPC channel and stub globally for reuse
+channel = grpc.insecure_channel('localhost:50051')
+stub = TicketStub(channel)
+
 # Route for user purchase ticket
 @app.route('/purchase_ticket/<int:list_id>', methods=['GET','POST'])
 def purchaseticket(list_id):
@@ -239,12 +259,23 @@ def purchaseticket(list_id):
 
         if sel_listing.real_status == 'Available': # checks if listing is still available
             sel_listing.sold_on = datetime.now()
-            sel_listing.buyer_id = g.user.user_id
-        
-            sel_ticket.owner_id = g.user.user_id
+            sel_listing.buyer_id = g.user.user_id #buyer
+            sel_ticket.owner_id = g.user.user_id  #new owner
+            
             # TODO add the gRPC function that updates the owner_id attribute on BC
-
-            #db.session.commit()
+            #Calls a GRPC transfer request
+            bc_trans_ticket_id = str(sel_listing.ticket_id)
+            bc_trans_owner_id = str(g.user.user_id)
+            transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
+            response = stub.TransferTicket(transfer_ticket_request)
+            print(response.success)
+            
+            #Calls a GRPC read request to ensure that the data is transferred.
+            read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
+            response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
+            print(response2.ticketInfo)
+            
+            db.session.commit()
             flash('Succesfully purchased the ticket, check the details in your inventory')
             return redirect(url_for('ticketinventory'))
         else:
