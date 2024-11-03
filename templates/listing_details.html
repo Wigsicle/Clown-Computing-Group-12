@@ -55,32 +55,32 @@
             <div class="row">
                 <div class="col-lg-8">
                     <div class="left-image">
-                        <img src="static/images/ticket-details.jpg" alt="" width="769" height="570">
+                        <img src="{{static({{event_info['img_path']}})}}" alt="" width="769" height="570">
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="right-content">
-                        <h4> Event Name</h4>
-                        <span> This is the details</span>
+                        <h4> {{ event_info['name'] }}</h4>
+                        <span> {{ event_info['details'] }}</span>
                         <ul>
-                            <li><i class="fa fa-clock-o"></i> 02/11/24 & 2248h</li>
-                            <li><i class="fa fa-map-marker"></i>Location</li>
+                            <li><i class="fa fa-clock-o"></i> {{event_info['date']}} {{event_info['time']}}</li>
+                            <li><i class="fa fa-map-marker"></i>{{event_info['location']}}</li>
                         </ul>
                         <div class="quantity-content">
                             <div class="left-content">
                                 <h6>Category</h6>
-                                <p>VIP</p>
+                                <p>{{ ticket_info['category'] }}</p>
                             </div>
                             <div class="right-content">
                                 <h6>Seat No.</h6>
-                                <p>35C</p>
+                                <p>{{ ticket_info['seat_no'] }}</p>
                             </div>
                         </div>
                         <div class="total">
-                            <h4>Total: $10</h4>
+                            <h4>Total: {{ ticket_info['list_price'] }}</h4>
                             <div class="main-dark-button">
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#buyModalCenter">
-                                    Purchase Ticket
+                                    <a href="/purchase_ticket">Purchase</a>
                                 </button>
                             </div>
                         </div>
