@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify
 from flask_migrate import Migrate
 import os
+import json
 from db import db
 from auth import auth
 from dotenv import load_dotenv
@@ -9,8 +10,9 @@ import transaction_history
 
 import grpc
 import hashlib  # Import hashlib for SHA-256 hashing
-import Ticket_pb2 as TicketStub  # Import the generated message classes
-import Ticket_pb2_grpc as ReadTicketByIdRequest  # Import the generated gRPC classes
+from Ticket_pb2_grpc import TicketStub
+from Ticket_pb2 import ReadTicketByIdRequest, TransferTicketRequest
+
 
 load_dotenv()
 
@@ -263,56 +265,89 @@ def sell_tickets():
     
     return render_template('resale_market.html')
 
+# Initialize gRPC channel and stub globally for reuse
+channel = grpc.insecure_channel('localhost:50051')
+stub = TicketStub(channel)
+
 @app.route('/add_ticket', methods=['POST'])
 def add_ticket():
-    if request.method == 'POST':
-        data = request.get_json()
-        guid = data.get('guid')
-        passkey = data.get('passkey')
+    data = request.get_json()
+    guid = data.get('guid')
+    passkey = data.get('passkey')
 
-        if not guid or not passkey:
-            return jsonify({'status': 'error', 'message': 'GUID and passkey are required'}), 400
+    if not guid or not passkey:
+        response_data = {'status': 'error', 'message': 'GUID and passkey are required'}
+        print("CLI Output:", response_data)  # Print to CLI
+        return jsonify(response_data), 400
 
-        # Hash the passkey with SHA-256
-        hashed_passkey = hashlib.sha256(passkey.encode()).hexdigest()
-
-        # Initialize gRPC channel and stub
-        with grpc.insecure_channel('localhost:50051') as channel:
-            stub = TicketStub(channel)
-
-            # Create request for ReadTicketById
-            read_ticket_request = ReadTicketByIdRequest(ticketId=guid, passkey=hashed_passkey)
-
-            try:
-                # Call the gRPC method
-                response = stub.ReadTicketById(read_ticket_request)
-
-                if response.ticketInfo:
-                    # If ticket exists, return ticket information in JSON format
-                    ticket_info = {
-                        'event_name': response.ticketInfo.event_name,
-                        'event_datetime': response.ticketInfo.event_datetime,
-                        'category': response.ticketInfo.category,
-                        'price': response.ticketInfo.price
-                    }
-                    return jsonify({'status': 'found', 'ticket_info': ticket_info})
-                else:
-                    # If ticket does not exist or passkey is incorrect
-                    return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'})
-            except grpc.RpcError as e:
-                # Handle gRPC errors
-                return jsonify({'status': 'error', 'message': f'RPC failed with status code {e.code()}: {e.details()}'})
+    # Hash the passkey with SHA-256
+    hashed_passkey = hashlib.sha256(passkey.encode()).hexdigest()
+    
+    read_ticket_request = ReadTicketByIdRequest(ticketId=guid)
+    
+    try:
+            # Call the gRPC method
+        response = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
             
+            # Assuming response.TicketInfo is the string returned by the Go server
+        ticket_info_string = response.ticketInfo
+            
+            # Parse the JSON string to a dictionary
+        ticket_info_dict = json.loads(ticket_info_string)
+
+       # Print the contents of ticket_info_dict for debugging
+        print("Ticket Info Dictionary:", ticket_info_dict)
+        
+        print(ticket_info_dict['HashVal'])
+        print(hashed_passkey)    #the hashed_passkey is not matching the one in the blockchain.
+
+        # Verify the HashVal against the hashed_passkey
+        if ticket_info_dict['HashVal'] == hashed_passkey:
+            # If the hashes match, return the ticket information with status 'found'
+            return jsonify({'status': 'found', 'ticket_info': ticket_info_dict})
+        else:
+            # If the hashes do not match, return not found status
+            return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'}), 404
+
+    except json.JSONDecodeError:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
+    except grpc.RpcError as e:
+        return jsonify({'status': 'error', 'message': f'RPC failed: {e.code()} - {e.details()}'}), 500
+    
+    
 @app.route('/confirm_add_ticket', methods=['POST'])
 def confirm_add_ticket():
     data = request.get_json()
     guid = data.get('guid')
 
-    # Implement logic to add the ticket to the user's inventory
-    # This might involve updating your database or making another gRPC call
+    # Simulate ticket addition logic here
+    # Update database or call another gRPC service if needed
 
-    # For now, we'll assume it's successful
-    return jsonify({'status': 'success'})
+    return jsonify({'status': 'success', 'message': 'Ticket added to user inventory'})
+
+
+def read_ticket_by_id(ticket_id):
+    """Helper to read ticket by ID with error handling."""
+    read_ticket_request = ReadTicketByIdRequest(ticketId=ticket_id)
+    try:
+        response = stub.ReadTicketById(read_ticket_request)
+        if hasattr(response, 'ticketInfo'):
+            return response.ticketInfo
+        else:
+            return None
+    except grpc.RpcError as e:
+        print(f"RPC failed: {e.code()} - {e.details()}")
+        return None
+
+def transfer_ticket(ticket_id, new_owner):
+    """Helper to transfer a ticket to a new owner."""
+    transfer_ticket_request = TransferTicketRequest(ticketId=ticket_id, newOwner=new_owner)
+    try:
+        transfer_response = stub.TransferTicket(transfer_ticket_request)
+        return transfer_response.success
+    except grpc.RpcError as e:
+        print(f"Transfer RPC failed: {e.code()} - {e.details()}")
+        return False
 
             
 

@@ -12,6 +12,7 @@ service Ticket {
 
 message ReadTicketByIdRequest {
     string ticketId = 1;
+    string passkey = 2;
 }
 
 message TransferTicketRequest {
