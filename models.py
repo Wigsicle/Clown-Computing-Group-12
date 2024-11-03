@@ -81,9 +81,12 @@ class Ticket(db.Model):
     @hybrid_property
     def listing_status(self)->Mapped[str]:
         '''Status of ticket\n
-        'Not Listed': Default value if the ticket is not listed on the marketplace\n
-        'Listed': Value when the ticket is currently available for sale on the marketplace
+        'Not Listed': Default value if the ticket is not listed on the marketplace [P1]\n
+        'Listed': Value when the ticket is currently available for sale on the marketplace [P1]\n
+        'Event Ended': Event that the ticket is connected to has ended. Will show regardless of listing [P0]
         '''
+        if self.event.status == 'Ended':
+            return 'Event Ended'
         for listing in self.ticket_listing_history:
             if listing.buyer_id is None:
                 return 'Listed'
@@ -130,8 +133,6 @@ class Ticket_Listing(db.Model):
         else:
             return price_str
         
-
-    
     @hybrid_property
     def real_status(self)->Mapped[str]:
         '''Status of ticket listing.\n

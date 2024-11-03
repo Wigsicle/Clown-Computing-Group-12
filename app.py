@@ -127,7 +127,7 @@ def ticketinventory():
         new_listing = Ticket_Listing(
             ticket_id=ticket_id,
             seller_id=g.user.user_id,
-            sale_price_cents = ticket.ticket_price_cents,
+            sale_price_cents = selling_price * 100,
             status='Available'
         )
         
