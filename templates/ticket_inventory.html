@@ -77,8 +77,9 @@
                                         </ul>
                                     </div>
                                     <div class="col-lg-4">
+                                        <!-- Add Ticket Button -->
                                         <div class="main-dark-button">
-                                            <a href="#">Add Ticket</a>
+                                            <a href="#" data-toggle="modal" data-target="#addTicketModal">Add Ticket</a>
                                         </div>
                                     </div>
                                 </div>
@@ -285,7 +286,34 @@
         </div>
     </div>
 
-    
+    <!-- Add Ticket Modal -->
+    <div class="modal fade" id="addTicketModal" tabindex="-1" role="dialog" aria-labelledby="addTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTicketModalLabel">Add Ticket</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTicketForm">
+                        <div class="form-group">
+                            <label for="guid">Enter Ticket GUID:</label>
+                            <input type="text" class="form-control" id="guid" name="guid" placeholder="Enter GUID" required>
+                        </div>
+                        <button type="button" class="btn btn-primary mt-2" onclick="searchTicket()">Search Ticket</button>
+                    </form>
+                    
+                    <!-- Display result -->
+                    <div id="ticketResult" class="mt-4" style="display: none;">
+                        <p id="ticketInfo"></p>
+                        <button class="btn btn-success" onclick="confirmAddTicket()">Confirm Add to Inventory</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
 
     <!-- jQuery -->
@@ -324,6 +352,39 @@
             // Update form action dynamically
             $('#sellTicketModal').modal('show');
         });
+        
+
+        // Add Ticket Script
+        function searchTicket() {
+        const guid = document.getElementById('guid').value;
+
+        fetch('/add_ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guid })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const ticketResult = document.getElementById('ticketResult');
+            const ticketInfo = document.getElementById('ticketInfo');
+
+            if (data.status === 'found') {
+                ticketInfo.textContent = `Ticket Found: ${data.ticket_info}`;
+                ticketResult.style.display = 'block';
+            } else {
+                ticketInfo.textContent = 'Ticket not found';
+                ticketResult.style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function confirmAddTicket() {
+        // Logic to confirm addition of the ticket to inventory
+        alert('Ticket successfully added to inventory');
+        $('#addTicketModal').modal('hide');
+    }
+
     </script>
 
 </body>

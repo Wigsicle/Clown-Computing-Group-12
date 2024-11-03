@@ -258,5 +258,29 @@ def sell_tickets():
     
     return render_template('resale_market.html')
 
+@app.route('/add_ticket', methods=['GET', 'POST'])
+def add_ticket():
+    if request.method == 'POST':
+        guid = request.form.get('guid')
+        
+        # Create gRPC request
+        request = CheckTicketRequest(guid=guid)
+        
+        try:
+            # Call the gRPC method
+            response = ticket_service.CheckTicket(request)
+            
+            if response.ticket_info:
+                # Ticket exists in blockchain; prompt user for confirmation
+                return jsonify({'status': 'found', 'ticket_info': response.ticket_info})
+            else:
+                # Ticket does not exist
+                return jsonify({'status': 'not_found', 'message': 'Ticket not found'})
+        except grpc.RpcError as e:
+            # Handle gRPC errors
+            return jsonify({'status': 'error', 'message': 'Error checking ticket GUID'})
+
+    return render_template('add_ticket.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
