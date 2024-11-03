@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, g, session, flash
+from flask import Flask, render_template, request, redirect, url_for, g, session, flash
 from flask_migrate import Migrate
 import os
 from db import db
@@ -216,6 +217,29 @@ def resale_market():
                             current_page=page)
 
 # Route for event details page
+@app.route('/listing/<int:id>')
+def listing_details(id):
+    """Displays the chosen ticket_listing"""
+    listing: Ticket_Listing = Ticket_Listing.query.filter_by(listing_id=id).first_or_404()
+    ticket: Ticket = listing.ticket
+    event: Event = listing.ticket.event
+
+    # info retrieved from the ticket listing's event
+    event_info:dict = {
+        'name': event.event_name,
+        'details': event.description,
+        'date': event.event_datetime.strftime('%d %b %Y'), # date string format: 28 Jan 2025
+        'time': event.event_datetime.strftime('%I:%M %p'), # time string format: 01:40 PM format
+        'location': event.location,
+        'img_path': event.event_image, # relative path to the event image stored in static/images/
+    }
+
+    ticket_info:dict = {
+        'list_id': id,
+        'list_price': listing.get_price_str(),
+        'category': ticket.seat_category,
+        'seat_no': ticket.seat_number,
+    }
 @app.route('/listing/<int:id>')
 def listing_details(id):
     """Displays the chosen ticket_listing"""
