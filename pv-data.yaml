@@ -1,0 +1,13 @@
+# pv-data.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadb-data-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mariadb

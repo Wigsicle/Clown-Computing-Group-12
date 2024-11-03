@@ -3,11 +3,11 @@ import Ticket_pb2  # Import the generated message classes
 import Ticket_pb2_grpc  # Import the generated gRPC classes
 
 def run():
-    with grpc.insecure_channel('localhost:50051') as channel:
+    with grpc.insecure_channel('localhost:8082') as channel:
         stub = Ticket_pb2_grpc.TicketStub(channel)  # Create a stub for the Ticket service
 
         # Example: Read Ticket by ID
-        ticket_id = "ticket4"  # Replace with the desired ticket ID
+        ticket_id = "1"  # Replace with the desired ticket ID
         read_ticket_request = Ticket_pb2.ReadTicketByIdRequest(ticketId=ticket_id)
         
         try:
@@ -17,8 +17,8 @@ def run():
             print(f"RPC failed with status code {e.code()}: {e.details()}")
     
         # Example: Transfer Ticket
-        ticket_id_to_transfer = "ticket4"  # Replace with the ticket ID to transfer
-        new_owner = "Jake"  # Replace with the new owner's identifier
+        ticket_id_to_transfer = "1"  # Replace with the ticket ID to transfer
+        new_owner = "1"  # Replace with the new owner's identifier
         transfer_ticket_request = Ticket_pb2.TransferTicketRequest(ticketId=ticket_id_to_transfer, newOwner=new_owner)
 
         try:

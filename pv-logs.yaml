@@ -1,0 +1,13 @@
+# pv-logs.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadb-logs-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /logs/mariadb
