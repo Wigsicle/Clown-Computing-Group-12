@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session
+from flask import Flask, render_template, request, redirect, url_for, g, session, flash
 from flask_migrate import Migrate
 import os
 from db import db
 from auth import auth
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import timedelta, datetime
 import transaction_history
 
 load_dotenv()
@@ -219,6 +219,7 @@ def listing_details(id):
     }
 
     ticket_info:dict = {
+        'list_id': id,
         'list_price': listing.get_price_str(),
         'category': ticket.seat_category,
         'seat_no': ticket.seat_number,
@@ -227,8 +228,28 @@ def listing_details(id):
     return render_template('listing_details.html',event_info=event_info,ticket_info=ticket_info)
 
 # Route for user purchase ticket
-@app.route('/purchase_ticket', methods=['POST'])
-def purchaseticket():
+@app.route('/purchase_ticket/<int:list_id>', methods=['GET','POST'])
+def purchaseticket(list_id):
+    if not g.user:
+        return redirect(url_for('auth.signin'))
+    
+    if request.method == 'POST' or list_id:
+        sel_listing:Ticket_Listing = db.get_or_404(Ticket_Listing, list_id)
+        sel_ticket:Ticket = sel_listing.ticket
+
+        if sel_listing.real_status == 'Available': # checks if listing is still available
+            sel_listing.sold_on = datetime.now()
+            sel_listing.buyer_id = g.user.user_id
+        
+            sel_ticket.owner_id = g.user.user_id
+            # TODO add the gRPC function that updates the owner_id attribute on BC
+
+            #db.session.commit()
+            flash('Succesfully purchased the ticket, check the details in your inventory')
+            return redirect(url_for('ticketinventory'))
+        else:
+            flash('Selected listing has already been purchased, redirecting you back to the Marketplace')
+
 
     return redirect(url_for('resale_market'))
     

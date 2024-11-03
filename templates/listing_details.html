@@ -55,7 +55,7 @@
             <div class="row">
                 <div class="col-lg-8">
                     <div class="left-image">
-                        <img src="{{static({{event_info['img_path']}})}}" alt="" width="769" height="570">
+                        <img src="{{url_for('static',filename=event_info['img_path'])}}" alt="" width="769" height="570">
                     </div>
                 </div>
                 <div class="col-lg-4">
@@ -80,7 +80,7 @@
                             <h4>Total: {{ ticket_info['list_price'] }}</h4>
                             <div class="main-dark-button">
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#buyModalCenter">
-                                    <a href="/purchase_ticket">Purchase</a>
+                                    Purchase
                                 </button>
                             </div>
                         </div>
@@ -186,7 +186,7 @@
         </div>
     </footer>
 
-    <!-- Buy Modal -->
+    <!-- Buy Modal This will show up when user clicks the 'Purchase' button asking them to confirm their transaction-->
     <div class="modal fade" id="buyModalCenter" tabindex="-1" role="dialog" aria-labelledby="buyModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -200,7 +200,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <form method="POST" action="{{ url_for('purchaseticket') }}">
+                    <form method="POST" action="{{ url_for('purchaseticket',list_id=ticket_info.list_id)}}">
                         <button type="submit" class="btn btn-primary">Confirm</button>
                     </form>
                 </div>
