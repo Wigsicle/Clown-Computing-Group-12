@@ -158,9 +158,8 @@ def ticketinventory():
                 "category": ticket.seat_category,
                 "price": ticket.get_price_str(),
                 "id": ticket.ticket_id,
+                "listing_status": ticket.listing_status,
             }
-            existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket.ticket_id, status='Available').first()
-            ticket_data['listing_status'] = ticket.listing_status
             ticket_info.append(ticket_data)
     
         print(ticket_info)

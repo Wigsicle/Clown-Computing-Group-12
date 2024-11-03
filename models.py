@@ -85,7 +85,7 @@ class Ticket(db.Model):
         'Listed': Value when the ticket is currently available for sale on the marketplace
         '''
         for listing in self.ticket_listing_history:
-            if listing.status == 'Available':
+            if listing.buyer_id is None:
                 return 'Listed'
         return 'Not Listed'
 
