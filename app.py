@@ -286,19 +286,19 @@ def add_ticket():
     read_ticket_request = ReadTicketByIdRequest(ticketId=guid)
     
     try:
-            # Call the gRPC method
+        # Call the gRPC method
         response = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
             
-            # Assuming response.TicketInfo is the string returned by the Go server
+        # Get the string from the Go GRPC server
         ticket_info_string = response.ticketInfo
             
-            # Parse the JSON string to a dictionary
+        # Parse the JSON string to a dictionary
         ticket_info_dict = json.loads(ticket_info_string)
 
        # Print the contents of ticket_info_dict for debugging
         print("Ticket Info Dictionary:", ticket_info_dict)
         
-        print(ticket_info_dict['HashVal'])
+        print(ticket_info_dict['HashVal']) #the hash value within the blockchain
         print(hashed_passkey)    #the hashed_passkey is not matching the one in the blockchain.
 
         # Verify the HashVal against the hashed_passkey
@@ -324,32 +324,6 @@ def confirm_add_ticket():
     # Update database or call another gRPC service if needed
 
     return jsonify({'status': 'success', 'message': 'Ticket added to user inventory'})
-
-
-def read_ticket_by_id(ticket_id):
-    """Helper to read ticket by ID with error handling."""
-    read_ticket_request = ReadTicketByIdRequest(ticketId=ticket_id)
-    try:
-        response = stub.ReadTicketById(read_ticket_request)
-        if hasattr(response, 'ticketInfo'):
-            return response.ticketInfo
-        else:
-            return None
-    except grpc.RpcError as e:
-        print(f"RPC failed: {e.code()} - {e.details()}")
-        return None
-
-def transfer_ticket(ticket_id, new_owner):
-    """Helper to transfer a ticket to a new owner."""
-    transfer_ticket_request = TransferTicketRequest(ticketId=ticket_id, newOwner=new_owner)
-    try:
-        transfer_response = stub.TransferTicket(transfer_ticket_request)
-        return transfer_response.success
-    except grpc.RpcError as e:
-        print(f"Transfer RPC failed: {e.code()} - {e.details()}")
-        return False
-
-            
 
 if __name__ == '__main__':
     app.run(debug=True)
