@@ -139,7 +139,7 @@ def ticketinventory():
     
     if request.method == 'GET':
         # Fetching tickets owned by the user
-        owned_tickets = g.user.tickets_owned 
+        owned_tickets:list[Ticket] = g.user.tickets_owned 
         print(f"Owned tickets: {[ticket.ticket_id for ticket in owned_tickets]}")
 
         """ticket_info = [{
@@ -160,7 +160,7 @@ def ticketinventory():
                 "id": ticket.ticket_id,
             }
             existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket.ticket_id, status='Available').first()
-            ticket_data['listing_status'] = 'Listed' if existing_listing else 'Not Listed'
+            ticket_data['listing_status'] = ticket.listing_status
             ticket_info.append(ticket_data)
     
         print(ticket_info)
