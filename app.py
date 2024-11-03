@@ -133,7 +133,7 @@ def ticketinventory():
         new_listing = Ticket_Listing(
             ticket_id=ticket_id,
             seller_id=g.user.user_id,
-            sale_price_cents = selling_price * 100,
+            sale_price_cents = selling_price * 100, #TODO ensure you can enter ticket price
             status='Available'
         )
         
@@ -167,7 +167,7 @@ def ticketinventory():
                 "listing_status": ticket.listing_status,
             }
             ticket_info.append(ticket_data)
-    
+        # TODO ensure that people cannot sell Ended Event or Listed stuff
         print(ticket_info)
 
         return render_template('ticket_inventory.html', tickets=ticket_info)
@@ -180,7 +180,9 @@ def resale_market():
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    available_tickets = Ticket_Listing.query.filter_by(status='Available').all()
+    available_tickets:list[Ticket_Listing] = Ticket_Listing.query.filter(Ticket_Listing.status=='Available', 
+                                                                         Ticket_Listing.seller_id!=g.user.user_id).all()
+    # only retrieve tickets that are Available for sell and are not the User's own listings
 
     valid_listings = [
         listing for listing in available_tickets

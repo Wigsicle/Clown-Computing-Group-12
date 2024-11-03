@@ -83,7 +83,8 @@ class Ticket(db.Model):
         '''Status of ticket\n
         'Not Listed': Default value if the ticket is not listed on the marketplace [P1]\n
         'Listed': Value when the ticket is currently available for sale on the marketplace [P1]\n
-        'Event Ended': Event that the ticket is connected to has ended. Will show regardless of listing [P0]
+        'Event Ended': Event that the ticket is connected to has ended. Will show regardless of listing [P0]\n
+        Event ended status will always show regardless of listed/not listed
         '''
         if self.event.status == 'Ended':
             return 'Event Ended'
