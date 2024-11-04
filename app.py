@@ -10,6 +10,14 @@ import transaction_history
 from sqlalchemy import exc
 from datetime import datetime
 
+import threading
+import queue
+import time
+import atexit
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 import grpc
 import hashlib  # Import hashlib for SHA-256 hashing
 from Ticket_pb2_grpc import TicketStub
@@ -39,6 +47,89 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 from models import User, Event, Ticket, Ticket_Listing
+
+task_queue = queue.Queue()
+purchase_queue = queue.Queue()
+
+def consumer():
+    while True:
+        task = task_queue.get()
+        if task is None:
+            break
+        logging.info(f"Consumer got task: {task}")
+        try:
+            process_task(task)
+        except Exception as e:
+            print(f"Error processing task: {e}")
+        finally:
+            task_queue.task_done()
+            
+def process_task(task):
+    logging.info(f"Processing task: {task}")
+    ticket_id, ticket_price_str, user_id = task
+    
+    with app.app_context():
+        ticket_price_str = ticket_price_str.replace('$', '').replace(',', '').strip()
+        ticket_price_cents = int(float(ticket_price_str) * 100)
+        ticket_listing = Ticket_Listing(
+            ticket_id=ticket_id,
+            seller_id=user_id,
+            sale_price_cents=ticket_price_cents,
+            status = 'Available'
+        )
+        
+        db.session.add(ticket_listing)
+        db.session.commit()
+        logging.info(f"Ticket listing created: {ticket_listing}")
+consumer_thread = threading.Thread(target=consumer)
+consumer_thread.daemon = True
+consumer_thread.start()
+
+def process_ticket_listing(ticket_id, selling_price, user_id):
+    task_queue.put((ticket_id, selling_price, user_id))
+    logging.info(f"Task added to queue: {ticket_id}, {selling_price}, {user_id}")
+
+def purchase_consumer():
+    while True:
+        purchase_task = purchase_queue.get()
+        if purchase_task is None:
+            break
+        logging.info(f"Purchase Consumer got task: {purchase_task}")
+        try:
+            process_purchase_task(purchase_task)
+        except Exception as e:
+            print(f"Error processing purchase task: {e}")
+        finally:
+            purchase_queue.task_done()
+            
+def process_purchase_task(task):
+    with app.app_context():
+        list_id, user_id = task
+        
+        sel_listing = Ticket_Listing.query.get(list_id)
+        if not sel_listing or sel_listing.real_status != 'Available':
+            logging.error(f"Listing not found or not available: {list_id}")
+            return
+        
+        sel_ticket = sel_listing.ticket
+        sel_listing.sold_on = datetime.now()
+        sel_listing.buyer_id = user_id
+        sel_ticket.owner_id = user_id
+        
+        bc_trans_ticket_id = str(sel_listing.ticket_id)
+        transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=str(user_id))
+        response = stub.TransferTicket(transfer_ticket_request)
+        
+        if response.success:
+            db.session.commit()
+            logging.info(f"Ticket purchased: {sel_listing}")
+        else:
+            db.session.rollback()
+            logging.error(f"Failed to purchase ticket: {sel_listing}")
+purchase_consumer_thread = threading.Thread(target=purchase_consumer)
+purchase_consumer_thread.daemon = True
+purchase_consumer_thread.start()
+        
 
 @app.context_processor
 def inject_user():
@@ -142,6 +233,8 @@ def ticketinventory():
         db.session.add(new_listing)
         db.session.commit()
         print(f"New listing created: {new_listing}")
+        
+        process_ticket_listing(ticket_id, selling_price, g.user.user_id)
         
         return redirect(url_for('resale_market'))
     
@@ -256,6 +349,10 @@ def purchaseticket(list_id):
     if not g.user:
         return redirect(url_for('auth.signin'))
     
+    user_id = g.user.user_id
+    
+    
+    
     if request.method == 'POST' or list_id:
         sel_listing:Ticket_Listing = db.get_or_404(Ticket_Listing, list_id)
         sel_ticket:Ticket = sel_listing.ticket
@@ -264,7 +361,10 @@ def purchaseticket(list_id):
             # Database transactions
             sel_listing.sold_on = datetime.now()
             sel_listing.buyer_id = g.user.user_id # assigns the buyer's ID to the listing
-            sel_ticket.owner_id = g.user.user_id  # sets the owner ID to the current user 
+            sel_ticket.owner_id = g.user.user_id  # sets the owner ID to the current user
+            
+            purchase_queue.put((list_id, user_id))
+            logging.info(f"Purchase task added to queue: {list_id}, {user_id}") 
             
             # Calls a GRPC transfer request
             bc_trans_ticket_id = str(sel_listing.ticket_id)
@@ -459,6 +559,12 @@ def add_ticket():
         return jsonify({'status': 'error', 'message': f'Blockchain update failed: {e.code()} - {e.details()}'}), 500
     except json.JSONDecodeError:
         return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
+    
+def shutdown_consumer():
+    task_queue.put(None)
+    purchase_queue.put(None)
+    consumer_thread.join(timeout=10)
+atexit.register(shutdown_consumer)
 
 if __name__ == '__main__':
     app.run(debug=True)
