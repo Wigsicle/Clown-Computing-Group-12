@@ -120,12 +120,18 @@
                                                                                     <td>
                                                                                         {% if ticket.listing_status == 'Listed' %}
                                                                                             <span class="status-listed">Listed</span>
+                                                                                        {% elif ticket.listing_status == 'Event Ended' %}
+                                                                                            <span class="status-listed">Event Ended</span>
                                                                                         {% else %}
                                                                                             <span class="status-not-listed">Not Listed</span>
                                                                                         {% endif %}
                                                                                     </td>
                                                                                     <td>
+                                                                                        {% if ticket.listing_status == 'Not Listed' %}
                                                                                         <button class="btn btn-primary sell-ticket-btn" data-ticket-id="{{ ticket.id }}" data-ticket-price="{{ ticket.price }}" data-event-name="{{ ticket.event_name }}" data-event-datetime="{{ ticket.event_datetime }}">Sell Ticket</button>
+                                                                                        {% else %}
+                                                                                        <!-- <button class="btn btn-primary sell-ticket-btn" disabled>Invalid</button> -->
+                                                                                        {% endif %}
                                                                                     </td>
                                                                                 </tr>
                                                                             {% endfor %}
