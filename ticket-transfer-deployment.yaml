@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: ticket-transfer-app
 spec:
-  replicas: 4
+  replicas: 2
   selector:
     matchLabels:
       app: ticket-transfer-app
@@ -42,30 +42,13 @@ spec:
               value: "dns:///peer0.org1.example.com:7051"
             - name: GATEWAY_PEER
               value: "peer0.org1.example.com"
-        # - name: envoy
-        #   image: envoyproxy/envoy:v1.24.0
-        #   ports:
-        #     - containerPort: 50051
-        #   volumeMounts:
-        #     - name: envoy-config
-        #       mountPath: /etc/envoy
-        #       readOnly: true
       volumes:
         - name: ca-cert
           hostPath:
             path: /data
-            # path: "C:\\Users\\Wigsicle\\Documents\\GitHub\\Clown-Computing-Group-12\\hyperledger-fabric-application\\Org1"
         - name: sign-cert
           hostPath:
-            # path: "C:\\Users\\Wigsicle\\Documents\\GitHub\\Clown-Computing-Group-12\\hyperledger-fabric-application\\Org1\\signcerts"
             path: /data/signcerts
         - name: keystore
           hostPath:
-            # path: "C:\\Users\\Wigsicle\\Documents\\GitHub\\Clown-Computing-Group-12\\hyperledger-fabric-application\\Org1\\keystore"
             path: /data/keystore
-        # - name: envoy-config
-        #   configMap:
-        #     name: envoy-config
-        #     items:
-        #       - key: envoy.yaml
-        #         path: envoy.yaml
