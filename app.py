@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, flash
-from flask import Flask, render_template, request, redirect, url_for, g, session, flash
 from flask_migrate import Migrate
 import os
 import json
