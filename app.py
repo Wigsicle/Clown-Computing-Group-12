@@ -102,6 +102,15 @@ def purchase_consumer():
         finally:
             purchase_queue.task_done()
             
+def get_grpc_stub():
+    try:
+        channel = grpc.insecure_channel('localhost:50051')
+        stub = TicketStub(channel)
+        return stub
+    except Exception as e:
+        logging.error(f"Failed to get gRPC stub: {e}")
+        return None
+            
 def process_purchase_task(task):
     with app.app_context():
         list_id, user_id = task
@@ -115,6 +124,11 @@ def process_purchase_task(task):
         sel_listing.sold_on = datetime.now()
         sel_listing.buyer_id = user_id
         sel_ticket.owner_id = user_id
+        
+        stub = get_grpc_stub()
+        if not stub:
+            logging.error("Failed to get gRPC stub")
+            return
         
         bc_trans_ticket_id = str(sel_listing.ticket_id)
         transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=str(user_id))
@@ -563,7 +577,11 @@ def add_ticket():
 def shutdown_consumer():
     task_queue.put(None)
     purchase_queue.put(None)
+    task_queue.join()
+    purchase_queue.join()
+    
     consumer_thread.join(timeout=10)
+    purchase_consumer_thread.join(timeout=10)
 atexit.register(shutdown_consumer)
 
 if __name__ == '__main__':
