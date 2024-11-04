@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, g, session, flash
 from flask_migrate import Migrate
 import os
 import json
 from db import db
 from auth import auth
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import timedelta, datetime
 import transaction_history
 from sqlalchemy import exc
 from datetime import datetime
@@ -176,21 +177,26 @@ def ticketinventory():
 
         return render_template('ticket_inventory.html', tickets=ticket_info)
 
-# Route for browsing resale tickets
 @app.route('/resale_market')
 def resale_market():
     if not g.user:
         return redirect(url_for('auth.signin'))
-    
+
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
-    available_tickets = Ticket_Listing.query.filter_by(status='Available')
-    ticket_paginated = available_tickets.paginate(page=page, per_page=per_page, error_out=False)
-    
+
+    available_tickets = Ticket_Listing.query.filter_by(status='Available').all()
+
+    valid_listings = [
+        listing for listing in available_tickets
+        if listing.real_status == "Available"
+    ]
+
+    ticket_paginated = valid_listings[(page - 1) * per_page: page * per_page]
+
     ticket_info = []
-    
-    for listing in ticket_paginated.items:
+
+    for listing in ticket_paginated:
         ticket = listing.ticket
         if ticket and ticket.event:
             ticket_info.append({
@@ -199,41 +205,86 @@ def resale_market():
             "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
             "category": ticket.seat_category,
             "price": listing.get_price_str(),
-            
+            "listing_status": listing.real_status
+
         #event = ticket.event
-        
+
         })
-            
+
     print(ticket_info)
-    
+
+    total_pages = len(valid_listings) // per_page + (1 if len(valid_listings) % per_page > 0 else 0)
+ 
     return render_template('resale_market.html',
-                           tickets=ticket_info,
-                           total_pages=ticket_paginated.pages,
-                           current_page=ticket_paginated.page)
+                            tickets=ticket_info,
+                            total_pages=total_pages,
+                            current_page=page)
 
 # Route for event details page
-@app.route('/event_details/<int:id>')
-def eventdetails(id):
-    ticket_detail = Ticket_Listing.query.filter_by(listing_id=id)
+@app.route('/listing/<int:id>')
+def listing_details(id):
+    """Displays the chosen ticket_listing"""
+    listing: Ticket_Listing = Ticket_Listing.query.filter_by(listing_id=id).first_or_404()
+    ticket: Ticket = listing.ticket
+    event: Event = listing.ticket.event
 
-    event_info = []
+    # info retrieved from the ticket listing's event
+    event_info:dict = {
+        'name': event.event_name,
+        'details': event.description,
+        'date': event.event_datetime.strftime('%d %b %Y'), # date string format: 28 Jan 2025
+        'time': event.event_datetime.strftime('%I:%M %p'), # time string format: 01:40 PM format
+        'location': event.location,
+        'img_path': event.event_image, # relative path to the event image stored in static/images/
+    }
 
-    for listing in ticket_detail:
-        ticket = listing.ticket
-        event_info.append({
-            "event_name": ticket.event.event_name,
-            "event_datetime": ticket.event.event_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-            "event_location": ticket.event.location,
-            "event_description": ticket.event.description,
-            "event_image": ticket.event.event_image, 
-            "price":listing.get_price_str(),
-        })
+    ticket_info:dict = {
+        'list_id': id,
+        'list_price': listing.get_price_str(),
+        'category': ticket.seat_category,
+        'seat_no': ticket.seat_number,
+    }
 
-    return render_template('event_details.html', events=event_info)
+    return render_template('listing_details.html',event_info=event_info,ticket_info=ticket_info)
+
+# Initialize gRPC channel and stub globally for reuse
+channel = grpc.insecure_channel('localhost:50051')
+stub = TicketStub(channel)
 
 # Route for user purchase ticket
-@app.route('/purchase_ticket', methods=['POST'])
-def purchaseticket():
+@app.route('/purchase_ticket/<int:list_id>', methods=['GET','POST'])
+def purchaseticket(list_id):
+    if not g.user:
+        return redirect(url_for('auth.signin'))
+    
+    if request.method == 'POST' or list_id:
+        sel_listing:Ticket_Listing = db.get_or_404(Ticket_Listing, list_id)
+        sel_ticket:Ticket = sel_listing.ticket
+
+        if sel_listing.real_status == 'Available': # checks if listing is still available
+            sel_listing.sold_on = datetime.now()
+            sel_listing.buyer_id = g.user.user_id #buyer
+            sel_ticket.owner_id = g.user.user_id  #new owner
+            
+            # TODO add the gRPC function that updates the owner_id attribute on BC
+            #Calls a GRPC transfer request
+            bc_trans_ticket_id = str(sel_listing.ticket_id)
+            bc_trans_owner_id = str(g.user.user_id)
+            transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
+            response = stub.TransferTicket(transfer_ticket_request)
+            print(response.success)
+            
+            #Calls a GRPC read request to ensure that the data is transferred.
+            read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
+            response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
+            print(response2.ticketInfo)
+            
+            db.session.commit()
+            flash('Succesfully purchased the ticket, check the details in your inventory')
+            return redirect(url_for('ticketinventory'))
+        else:
+            flash('Selected listing has already been purchased, redirecting you back to the Marketplace')
+
 
     return redirect(url_for('resale_market'))
     
