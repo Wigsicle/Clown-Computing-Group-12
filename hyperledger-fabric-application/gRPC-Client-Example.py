@@ -3,7 +3,7 @@ import Ticket_pb2  # Import the generated message classes
 import Ticket_pb2_grpc  # Import the generated gRPC classes
 
 def run():
-    with grpc.insecure_channel('localhost:8082') as channel:
+    with grpc.insecure_channel('localhost:50051') as channel:
         stub = Ticket_pb2_grpc.TicketStub(channel)  # Create a stub for the Ticket service
 
         # Example: Read Ticket by ID
