@@ -85,9 +85,6 @@ consumer_thread = threading.Thread(target=consumer)
 consumer_thread.daemon = True
 consumer_thread.start()
 
-def process_ticket_listing(ticket_id, selling_price, user_id):
-    task_queue.put((ticket_id, selling_price, user_id))
-    logging.info(f"Task added to queue: {ticket_id}, {selling_price}, {user_id}")
 
 def purchase_consumer():
     while True:
@@ -116,12 +113,13 @@ def process_purchase_task(task):
         list_id, user_id = task
         
         sel_listing = Ticket_Listing.query.get(list_id)
-        if not sel_listing or sel_listing.real_status != 'Available':
-            logging.error(f"Listing not found or not available: {list_id}")
+        if not sel_listing or sel_listing.status != 'Available':
+            logging.error(f"Listing not found or not available: {list_id} with status ")
             return
         
         sel_ticket = sel_listing.ticket
         sel_listing.sold_on = datetime.now()
+        sel_listing.status = 'Sold'
         sel_listing.buyer_id = user_id
         sel_ticket.owner_id = user_id
         
@@ -130,16 +128,27 @@ def process_purchase_task(task):
             logging.error("Failed to get gRPC stub")
             return
         
+        # Calls a GRPC transfer request
         bc_trans_ticket_id = str(sel_listing.ticket_id)
-        transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=str(user_id))
+        bc_trans_owner_id = str(g.user.user_id)
+        transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
         response = stub.TransferTicket(transfer_ticket_request)
+        print(response.success)
+            
+            # Calls a GRPC read request to ensure that the data is transferred.
+        read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
+        response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
+        print(response2.ticketInfo)
         
+        logging.debug(f"gRPC response: {response}")
+            
         if response.success:
             db.session.commit()
             logging.info(f"Ticket purchased: {sel_listing}")
         else:
             db.session.rollback()
             logging.error(f"Failed to purchase ticket: {sel_listing}")
+                
 purchase_consumer_thread = threading.Thread(target=purchase_consumer)
 purchase_consumer_thread.daemon = True
 purchase_consumer_thread.start()
@@ -248,7 +257,8 @@ def ticketinventory():
         db.session.commit()
         print(f"New listing created: {new_listing}")
         
-        process_ticket_listing(ticket_id, selling_price, g.user.user_id)
+        task_queue.put((ticket_id, selling_price, g.user.user_id))
+        logging.info(f"Task added to queue: {ticket_id}, {selling_price}, {g.user.user_id}")
         
         return redirect(url_for('resale_market'))
     
@@ -363,9 +373,7 @@ def purchaseticket(list_id):
     if not g.user:
         return redirect(url_for('auth.signin'))
     
-    user_id = g.user.user_id
-    
-    
+    user_id = g.user.user_id if g.user else None
     
     if request.method == 'POST' or list_id:
         sel_listing:Ticket_Listing = db.get_or_404(Ticket_Listing, list_id)
@@ -374,23 +382,25 @@ def purchaseticket(list_id):
         if sel_listing.real_status == 'Available': # checks if listing is still available
             # Database transactions
             sel_listing.sold_on = datetime.now()
+            sel_listing.status = 'Sold'
             sel_listing.buyer_id = g.user.user_id # assigns the buyer's ID to the listing
             sel_ticket.owner_id = g.user.user_id  # sets the owner ID to the current user
+            sel_ticket: Ticket = sel_listing.ticket
             
             purchase_queue.put((list_id, user_id))
             logging.info(f"Purchase task added to queue: {list_id}, {user_id}") 
             
             # Calls a GRPC transfer request
-            bc_trans_ticket_id = str(sel_listing.ticket_id)
-            bc_trans_owner_id = str(g.user.user_id)
-            transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
-            response = stub.TransferTicket(transfer_ticket_request)
-            print(response.success)
+            #bc_trans_ticket_id = str(sel_listing.ticket_id)
+            #bc_trans_owner_id = str(g.user.user_id)
+            #transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
+            #response = stub.TransferTicket(transfer_ticket_request)
+            #print(response.success)
             
             # Calls a GRPC read request to ensure that the data is transferred.
-            read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
-            response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
-            print(response2.ticketInfo)
+            #read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
+            #response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
+            #print(response2.ticketInfo)
             
             db.session.commit() # commits db changes back to DB, comment out if testing FE only
             flash('Succesfully purchased the ticket, check the details in your inventory')
