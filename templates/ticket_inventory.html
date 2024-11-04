@@ -105,8 +105,8 @@
                                                                             <th scope="col">Event Name</th>
                                                                             <th scope="col">Date</th>
                                                                             <th scope="col">Category</th>
-                                                                            <th scope="col">Price</th>
-                                                                            <th scope="col"></th>
+                                                                            <!-- <th scope="col">Price</th> -->
+                                                                            <th scope="col">Status</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -116,7 +116,7 @@
                                                                                     <td>{{ ticket.event_name }}</td>
                                                                                     <td>{{ ticket.event_datetime }}</td>
                                                                                     <td>{{ ticket.category }}</td>
-                                                                                    <td>{{ ticket.price }}</td>
+                                                                                    <!-- <td>{{ ticket.price }}</td> -->
                                                                                     <td>
                                                                                         {% if ticket.listing_status == 'Listed' %}
                                                                                             <span class="status-listed">Listed</span>

@@ -50,7 +50,7 @@ class Ticket(db.Model):
     __tablename__ = 'ticket'
     ticket_id:Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False) 
     '''Ticket Blockchain ID, retrieved during Registration phase.'''
-    ticket_price_cents:Mapped[int] = mapped_column(Integer, nullable=False) # stored as cents, convert to dollar value for display by /100
+    ticket_price_cents:Mapped[int] = mapped_column(Integer, nullable=False, default=0.00) # stored as cents, convert to dollar value for display by /100
     register_date:Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now()) # date when the ticket was registered into system
     '''Datetime object generated when ticket is registered into system'''
     seat_category:Mapped[str] = mapped_column(String(50), nullable=False, default='empty') # pull from BC
