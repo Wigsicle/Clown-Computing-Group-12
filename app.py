@@ -372,9 +372,15 @@ def add_ticket():
         db.session.commit()
 
         # Update the OwnerID in the blockchain
-        update_ticket_request = UpdateTicketOwnershipRequest(ticketId=guid, newOwnerId=str(user_id))
-        update_response = stub.UpdateTicketOwnership(update_ticket_request)
-
+        update_ticket_request = TransferTicketRequest(ticketId=str(guid), newOwner=str(user_id))
+        update_response = stub.TransferTicket(update_ticket_request) 
+        print(update_response)   #prints the response whether successful or not
+        
+        #Reads the Ticket in the blockchain
+        update_ticket_request_r = ReadTicketByIdRequest(ticketId=str(guid))
+        update_response_r = stub.ReadTicketById(update_ticket_request_r)
+        print(update_response_r) #prints the ticket info to check whether the transfer is successful
+        
         if update_response.success:
             return jsonify({'status': 'success', 'message': 'Ticket added to user inventory and blockchain updated'})
         else:
