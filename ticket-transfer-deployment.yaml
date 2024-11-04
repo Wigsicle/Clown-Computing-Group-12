@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-transfer-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ticket-transfer-app
+  template:
+    metadata:
+      labels:
+        app: ticket-transfer-app
+    spec:
+      containers:
+        - name: ticket-transfer-app
+          image: wigsicle/ticket-transfer-app
+          ports:
+            - containerPort: 50051
+          volumeMounts:
+            - name: ca-cert
+              mountPath: /app/Org1/ca.crt
+              subPath: ca.crt
+            - name: sign-cert
+              mountPath: app/Org1/signcerts/User1@org1.example.com-cert.pem
+              subPath: User1@org1.example.com-cert.pem
+            - name: keystore
+              mountPath: app/Org1/keystore/priv_sk
+              subPath: priv_sk
+          env:
+            - name: MSP_ID
+              value: "Org1MSP"
+            - name: CRYPTO_PATH
+              value: "/app"
+            - name: CERT_PATH
+              value: "signcerts/User1@org1.example.com-cert.pem"
+            - name: KEY_PATH
+              value: "keystore/priv_sk"
+            - name: TLS_CERT_PATH
+              value: "ca.crt"
+            - name: PEER_ENDPOINT
+              value: "dns:///peer0.org1.example.com:7051"
+            - name: GATEWAY_PEER
+              value: "peer0.org1.example.com"
+      volumes:
+        - name: ca-cert
+          hostPath:
+            path: /data
+        - name: sign-cert
+          hostPath:
+            path: /data/signcerts
+        - name: keystore
+          hostPath:
+            path: /data/keystore
