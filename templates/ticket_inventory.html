@@ -410,11 +410,29 @@
             });
         }
 
+        // Add Ticket to Inventory Script
         function addTicket() {
-            // Logic to confirm addition of the ticket to inventory
-            // You might need to send a request to the server to actually add the ticket
-            alert('Ticket successfully added to inventory');
-            $('#addTicketModal').modal('hide');
+            const guid = document.getElementById('guid').value;
+
+            fetch('/add_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guid })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);  // Show success message
+                    $('#addTicketModal').modal('hide');
+                    resetAddTicketModal(); // Clear modal fields
+                } else {
+                    alert(data.message || 'Failed to add ticket to inventory');  // Show error message
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the ticket to inventory.');
+            });
         }
 
         function resetAddTicketModal() {

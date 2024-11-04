@@ -7,6 +7,8 @@ from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta
 import transaction_history
+from sqlalchemy import exc
+import datetime
 
 import grpc
 import hashlib  # Import hashlib for SHA-256 hashing
@@ -270,7 +272,7 @@ channel = grpc.insecure_channel('localhost:50051')
 stub = TicketStub(channel)
 
 @app.route('/search_ticket', methods=['POST'])
-def add_ticket():
+def search_ticket():
     data = request.get_json()
     guid = data.get('guid')
     passkey = data.get('passkey')
@@ -333,14 +335,61 @@ def add_ticket():
     
     
 @app.route('/add_ticket', methods=['POST'])
-def confirm_add_ticket():
+def add_ticket():
     data = request.get_json()
     guid = data.get('guid')
 
-    # Simulate ticket addition logic here
+    if not guid:
+        return jsonify({'status': 'error', 'message': 'GUID is required'}), 400
 
+    # Get the logged-in user's ID (assuming session-based authentication)
+    user_id = getattr(g.user, 'user_id', None)  # Use g.user if set by your authentication system
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'User not authenticated'}), 401
 
-    return jsonify({'status': 'success', 'message': 'Ticket added to user inventory'})
+    try:
+        # Retrieve ticket info from the blockchain first to obtain necessary details
+        read_ticket_request = ReadTicketByIdRequest(ticketId=guid)
+        response = stub.ReadTicketById(read_ticket_request)
+        ticket_info = json.loads(response.ticketInfo)
+
+        # Ensure ticket is unregistered in blockchain (OwnerID is "default")
+        if ticket_info.get('OwnerID') != 'default':
+            return jsonify({'status': 'error', 'message': 'This ticket is already registered to another user'}), 403
+
+        # Add the ticket to the database
+        new_ticket = Ticket(
+            ticket_id=int(guid),
+            ticket_price_cents=int(ticket_info.get('Price', 0)),  # Example placeholder, adjust as needed
+            register_date=datetime.now(),
+            seat_category=ticket_info.get('Category', 'N/A'),
+            seat_number=ticket_info.get('SeatNumber', 'N/A'),
+            owner_id=user_id,
+            event_id=int(ticket_info.get('EventID', 0))  # Assuming event ID is provided by ticket_info
+        )
+
+        db.session.add(new_ticket)
+        db.session.commit()
+
+        # Update the OwnerID in the blockchain
+        update_ticket_request = UpdateTicketOwnershipRequest(ticketId=guid, newOwnerId=str(user_id))
+        update_response = stub.UpdateTicketOwnership(update_ticket_request)
+
+        if update_response.success:
+            return jsonify({'status': 'success', 'message': 'Ticket added to user inventory and blockchain updated'})
+        else:
+            # Rollback the database addition if the blockchain update fails
+            db.session.delete(new_ticket)
+            db.session.commit()
+            return jsonify({'status': 'error', 'message': 'Failed to update blockchain ownership'}), 500
+
+    except exc.SQLAlchemyError as e:
+        db.session.rollback()  # Roll back the database transaction on error
+        return jsonify({'status': 'error', 'message': f'Database error: {str(e)}'}), 500
+    except grpc.RpcError as e:
+        return jsonify({'status': 'error', 'message': f'Blockchain update failed: {e.code()} - {e.details()}'}), 500
+    except json.JSONDecodeError:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
