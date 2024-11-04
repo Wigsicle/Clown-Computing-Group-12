@@ -269,7 +269,7 @@ def sell_tickets():
 channel = grpc.insecure_channel('localhost:50051')
 stub = TicketStub(channel)
 
-@app.route('/add_ticket', methods=['POST'])
+@app.route('/search_ticket', methods=['POST'])
 def add_ticket():
     data = request.get_json()
     guid = data.get('guid')
@@ -291,7 +291,6 @@ def add_ticket():
             
         # Get the string from the gRPC response and parse it as JSON
         ticket_info_string = response.ticketInfo
-        ticket_info_dict = json.loads(ticket_info_string)
             
         # Parse the JSON string to a dictionary
         ticket_info_dict = json.loads(ticket_info_string)
@@ -304,17 +303,25 @@ def add_ticket():
 
         # Check the hashed passkey against the stored HashVal
         if ticket_info_dict.get('HashVal') == hashed_passkey:
-            # Prepare the data structure for the front end
-            return jsonify({
-                'status': 'found',
-                'ticket_info': {
-                    'ticket_id': ticket_info_dict.get('TicketID', 'N/A'),
-                    'event_name': ticket_info_dict.get('EventName', 'N/A'),
-                    'category': ticket_info_dict.get('TicketCategory', 'N/A'),
-                    'seat_number': ticket_info_dict.get('SeatNumber', 'N/A'),
-                    'owner_id': ticket_info_dict.get('OwnerID', 'N/A')
-                }
-            })
+            # Check if the OwnerID is 'default'
+            if ticket_info_dict.get('OwnerID') == 'default':
+                # Allow addition as the ticket is unregistered
+                return jsonify({
+                    'status': 'found',
+                    'ticket_info': {
+                        'ticket_id': ticket_info_dict.get('TicketID', 'N/A'),
+                        'event_name': ticket_info_dict.get('EventName', 'N/A'),
+                        'category': ticket_info_dict.get('TicketCategory', 'N/A'),
+                        'seat_number': ticket_info_dict.get('SeatNumber', 'N/A'),
+                        'owner_id': ticket_info_dict.get('OwnerID', 'N/A')
+                    }
+                })
+            else:
+                # If OwnerID is not 'default', the ticket is already registered
+                return jsonify({
+                    'status': 'error',
+                    'message': 'This ticket has already been registered'
+                }), 403
         else:
             # If the hashes do not match, return not found status
             return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'}), 404
@@ -325,7 +332,7 @@ def add_ticket():
         return jsonify({'status': 'error', 'message': f'RPC failed: {e.code()} - {e.details()}'}), 500
     
     
-@app.route('/confirm_add_ticket', methods=['POST'])
+@app.route('/add_ticket', methods=['POST'])
 def confirm_add_ticket():
     data = request.get_json()
     guid = data.get('guid')
