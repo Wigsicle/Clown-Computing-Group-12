@@ -425,7 +425,7 @@ def add_ticket():
             ticket_id=int(guid),
             ticket_price_cents=int(ticket_info.get('Price', 0)),  # Example placeholder, adjust as needed
             register_date=datetime.now(),
-            seat_category=ticket_info.get('Category', 'N/A'),
+            seat_category=ticket_info.get('TicketCategory', 'N/A'),
             seat_number=ticket_info.get('SeatNumber', 'N/A'),
             owner_id=user_id,
             event_id=event_id 
