@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from datetime import timedelta
 import transaction_history
 from sqlalchemy import exc
-import datetime
+from datetime import datetime
 
 import grpc
 import hashlib  # Import hashlib for SHA-256 hashing
@@ -356,6 +356,19 @@ def add_ticket():
         # Ensure ticket is unregistered in blockchain (OwnerID is "default")
         if ticket_info.get('OwnerID') != 'default':
             return jsonify({'status': 'error', 'message': 'This ticket is already registered to another user'}), 403
+        
+        # Get event_name from ticket_info
+        event_name = ticket_info.get('EventName')
+        if not event_name:
+            return jsonify({'status': 'error', 'message': 'Event name not found in ticket information'}), 400
+
+        # Query the Event table to get event_id using event_name
+        existing_event = Event.query.filter_by(event_name=event_name).first()
+        if not existing_event:
+            return jsonify({'status': 'error', 'message': f'Event "{event_name}" not found in the database'}), 404
+        
+        # Use the retrieved event_id for the new ticket
+        event_id = existing_event.event_id
 
         # Add the ticket to the database
         new_ticket = Ticket(
@@ -365,7 +378,7 @@ def add_ticket():
             seat_category=ticket_info.get('Category', 'N/A'),
             seat_number=ticket_info.get('SeatNumber', 'N/A'),
             owner_id=user_id,
-            event_id=int(ticket_info.get('EventID', 0))  # Assuming event ID is provided by ticket_info
+            event_id=event_id 
         )
 
         db.session.add(new_ticket)
