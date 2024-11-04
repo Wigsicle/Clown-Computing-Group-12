@@ -1,14 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session, flash
-from flask import Flask, render_template, request, redirect, url_for, g, session, flash
+from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify, flash
 from flask_migrate import Migrate
 import os
+import json
 from db import db
 from auth import auth
 from dotenv import load_dotenv
 from datetime import timedelta, datetime
 import transaction_history
+from sqlalchemy import exc
+from datetime import datetime
 
 import grpc
+import hashlib  # Import hashlib for SHA-256 hashing
 from Ticket_pb2_grpc import TicketStub
 from Ticket_pb2 import ReadTicketByIdRequest, TransferTicketRequest
 
@@ -313,6 +316,149 @@ def sell_tickets():
     print(new_listing)
     
     return render_template('resale_market.html')
+
+# Initialize gRPC channel and stub globally for reuse
+channel = grpc.insecure_channel('localhost:50051')
+stub = TicketStub(channel)
+
+@app.route('/search_ticket', methods=['POST'])
+def search_ticket():
+    data = request.get_json()
+    guid = data.get('guid')
+    passkey = data.get('passkey')
+
+    if not guid or not passkey:
+        response_data = {'status': 'error', 'message': 'GUID and passkey are required'}
+        print("CLI Output:", response_data)  # Print to CLI
+        return jsonify(response_data), 400
+
+    # Hash the passkey with SHA-256
+    hashed_passkey = hashlib.sha256(passkey.encode()).hexdigest()
+    
+    read_ticket_request = ReadTicketByIdRequest(ticketId=guid)
+    
+    try:
+        # Call the gRPC method
+        response = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
+            
+        # Get the string from the gRPC response and parse it as JSON
+        ticket_info_string = response.ticketInfo
+            
+        # Parse the JSON string to a dictionary
+        ticket_info_dict = json.loads(ticket_info_string)
+
+       # Print the contents of ticket_info_dict for debugging
+        print("Ticket Info Dictionary:", ticket_info_dict)
+        
+        print(ticket_info_dict['HashVal']) #the hash value within the blockchain
+        print(hashed_passkey)    #the hashed_passkey is not matching the one in the blockchain.
+
+        # Check the hashed passkey against the stored HashVal
+        if ticket_info_dict.get('HashVal') == hashed_passkey:
+            # Check if the OwnerID is 'default'
+            if ticket_info_dict.get('OwnerID') == 'default':
+                # Allow addition as the ticket is unregistered
+                return jsonify({
+                    'status': 'found',
+                    'ticket_info': {
+                        'ticket_id': ticket_info_dict.get('TicketID', 'N/A'),
+                        'event_name': ticket_info_dict.get('EventName', 'N/A'),
+                        'category': ticket_info_dict.get('TicketCategory', 'N/A'),
+                        'seat_number': ticket_info_dict.get('SeatNumber', 'N/A'),
+                        'owner_id': ticket_info_dict.get('OwnerID', 'N/A')
+                    }
+                })
+            else:
+                # If OwnerID is not 'default', the ticket is already registered
+                return jsonify({
+                    'status': 'error',
+                    'message': 'This ticket has already been registered'
+                }), 403
+        else:
+            # If the hashes do not match, return not found status
+            return jsonify({'status': 'not_found', 'message': 'Ticket not found or passkey incorrect'}), 404
+
+    except json.JSONDecodeError:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
+    except grpc.RpcError as e:
+        return jsonify({'status': 'error', 'message': f'RPC failed: {e.code()} - {e.details()}'}), 500
+    
+    
+@app.route('/add_ticket', methods=['POST'])
+def add_ticket():
+    data = request.get_json()
+    guid = data.get('guid')
+
+    if not guid:
+        return jsonify({'status': 'error', 'message': 'GUID is required'}), 400
+
+    # Get the logged-in user's ID (assuming session-based authentication)
+    user_id = getattr(g.user, 'user_id', None)  # Use g.user if set by your authentication system
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'User not authenticated'}), 401
+
+    try:
+        # Retrieve ticket info from the blockchain first to obtain necessary details
+        read_ticket_request = ReadTicketByIdRequest(ticketId=guid)
+        response = stub.ReadTicketById(read_ticket_request)
+        ticket_info = json.loads(response.ticketInfo)
+
+        # Ensure ticket is unregistered in blockchain (OwnerID is "default")
+        if ticket_info.get('OwnerID') != 'default':
+            return jsonify({'status': 'error', 'message': 'This ticket is already registered to another user'}), 403
+        
+        # Get event_name from ticket_info
+        event_name = ticket_info.get('EventName')
+        if not event_name:
+            return jsonify({'status': 'error', 'message': 'Event name not found in ticket information'}), 400
+
+        # Query the Event table to get event_id using event_name
+        existing_event = Event.query.filter_by(event_name=event_name).first()
+        if not existing_event:
+            return jsonify({'status': 'error', 'message': f'Event "{event_name}" not found in the database'}), 404
+        
+        # Use the retrieved event_id for the new ticket
+        event_id = existing_event.event_id
+
+        # Add the ticket to the database
+        new_ticket = Ticket(
+            ticket_id=int(guid),
+            ticket_price_cents=int(ticket_info.get('Price', 0)),  # Example placeholder, adjust as needed
+            register_date=datetime.now(),
+            seat_category=ticket_info.get('TicketCategory', 'N/A'),
+            seat_number=ticket_info.get('SeatNumber', 'N/A'),
+            owner_id=user_id,
+            event_id=event_id 
+        )
+
+        db.session.add(new_ticket)
+        db.session.commit()
+
+        # Update the OwnerID in the blockchain
+        update_ticket_request = TransferTicketRequest(ticketId=str(guid), newOwner=str(user_id))
+        update_response = stub.TransferTicket(update_ticket_request) 
+        print(update_response)   #prints the response whether successful or not
+        
+        #Reads the Ticket in the blockchain
+        update_ticket_request_r = ReadTicketByIdRequest(ticketId=str(guid))
+        update_response_r = stub.ReadTicketById(update_ticket_request_r)
+        print(update_response_r) #prints the ticket info to check whether the transfer is successful
+        
+        if update_response.success:
+            return jsonify({'status': 'success', 'message': 'Ticket added to user inventory and blockchain updated'})
+        else:
+            # Rollback the database addition if the blockchain update fails
+            db.session.delete(new_ticket)
+            db.session.commit()
+            return jsonify({'status': 'error', 'message': 'Failed to update blockchain ownership'}), 500
+
+    except exc.SQLAlchemyError as e:
+        db.session.rollback()  # Roll back the database transaction on error
+        return jsonify({'status': 'error', 'message': f'Database error: {str(e)}'}), 500
+    except grpc.RpcError as e:
+        return jsonify({'status': 'error', 'message': f'Blockchain update failed: {e.code()} - {e.details()}'}), 500
+    except json.JSONDecodeError:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
