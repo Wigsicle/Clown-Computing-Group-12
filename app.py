@@ -76,15 +76,14 @@ def homepage():
 def tickettransactionhistory():
     '''Let user view their past ticket transactions
     Passes the buy and sell transactions as two separate lists to the ticket_transaction_history page to rendere'''
-    user_email:str = session.get('user') # use user email from session for now TODO change to user_id when ready
-
+    session_user_id:str = g.user.user_id
     selected_page_num = request.args.get('page', 1, type=int) # gets the selected page number from GET request
     records_per_page = 10   # number of records per page
 
-    if not user_email:
+    if not g.user:
         return redirect(url_for('auth.signin'))
     
-    user:User = User.query.filter_by(email=user_email).first() # gets the latest transaction history when page loads 
+    user:User = User.query.filter_by(user_id=session_user_id).first() # gets the latest transaction history when page loads 
 
     if not user:
         return "User not found", 404
@@ -123,7 +122,7 @@ def ticketinventory():
     
     if request.method == 'POST':
         ticket_id = request.form['ticket_id']
-        selling_price = request.form['selling_price']
+        selling_price = request.form['ticket_sell_box']
         
         ticket = Ticket.query.get(ticket_id)
         if not ticket or ticket.owner_id != g.user.user_id:
@@ -136,7 +135,7 @@ def ticketinventory():
         new_listing = Ticket_Listing(
             ticket_id=ticket_id,
             seller_id=g.user.user_id,
-            sale_price_cents = ticket.ticket_price_cents,
+            sale_price_cents = int(round(float(selling_price) * 100)), #TODO ensure you can enter ticket price
             status='Available'
         )
         
@@ -148,7 +147,7 @@ def ticketinventory():
     
     if request.method == 'GET':
         # Fetching tickets owned by the user
-        owned_tickets = g.user.tickets_owned 
+        owned_tickets:list[Ticket] = g.user.tickets_owned 
         print(f"Owned tickets: {[ticket.ticket_id for ticket in owned_tickets]}")
 
         """ticket_info = [{
@@ -167,11 +166,10 @@ def ticketinventory():
                 "category": ticket.seat_category,
                 "price": ticket.get_price_str(),
                 "id": ticket.ticket_id,
+                "listing_status": ticket.listing_status,
             }
-            existing_listing = Ticket_Listing.query.filter_by(ticket_id=ticket.ticket_id, status='Available').first()
-            ticket_data['listing_status'] = 'Listed' if existing_listing else 'Not Listed'
             ticket_info.append(ticket_data)
-    
+        # TODO ensure that people cannot sell Ended Event or Listed stuff
         print(ticket_info)
 
         return render_template('ticket_inventory.html', tickets=ticket_info)
@@ -184,7 +182,9 @@ def resale_market():
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    available_tickets = Ticket_Listing.query.filter_by(status='Available').all()
+    available_tickets:list[Ticket_Listing] = Ticket_Listing.query.filter(Ticket_Listing.status=='Available', 
+                                                                         Ticket_Listing.seller_id!=g.user.user_id).all()
+    # only retrieve tickets that are Available for sale and are not the User's own listings
 
     valid_listings = [
         listing for listing in available_tickets
@@ -261,24 +261,24 @@ def purchaseticket(list_id):
         sel_ticket:Ticket = sel_listing.ticket
 
         if sel_listing.real_status == 'Available': # checks if listing is still available
+            # Database transactions
             sel_listing.sold_on = datetime.now()
-            sel_listing.buyer_id = g.user.user_id #buyer
-            sel_ticket.owner_id = g.user.user_id  #new owner
+            sel_listing.buyer_id = g.user.user_id # assigns the buyer's ID to the listing
+            sel_ticket.owner_id = g.user.user_id  # sets the owner ID to the current user 
             
-            # TODO add the gRPC function that updates the owner_id attribute on BC
-            #Calls a GRPC transfer request
+            # Calls a GRPC transfer request
             bc_trans_ticket_id = str(sel_listing.ticket_id)
             bc_trans_owner_id = str(g.user.user_id)
             transfer_ticket_request = TransferTicketRequest(ticketId=bc_trans_ticket_id, newOwner=bc_trans_owner_id)
             response = stub.TransferTicket(transfer_ticket_request)
             print(response.success)
             
-            #Calls a GRPC read request to ensure that the data is transferred.
+            # Calls a GRPC read request to ensure that the data is transferred.
             read_ticket_request = ReadTicketByIdRequest(ticketId=bc_trans_ticket_id)
             response2 = stub.ReadTicketById(read_ticket_request)  # This should return a ReadTicketByIdReply
             print(response2.ticketInfo)
             
-            db.session.commit()
+            db.session.commit() # commits db changes back to DB, comment out if testing FE only
             flash('Succesfully purchased the ticket, check the details in your inventory')
             return redirect(url_for('ticketinventory'))
         else:

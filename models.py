@@ -50,7 +50,7 @@ class Ticket(db.Model):
     __tablename__ = 'ticket'
     ticket_id:Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False) 
     '''Ticket Blockchain ID, retrieved during Registration phase.'''
-    ticket_price_cents:Mapped[int] = mapped_column(Integer, nullable=False) # stored as cents, convert to dollar value for display by /100
+    ticket_price_cents:Mapped[int] = mapped_column(Integer, nullable=False, default=0.00) # stored as cents, convert to dollar value for display by /100
     register_date:Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now()) # date when the ticket was registered into system
     '''Datetime object generated when ticket is registered into system'''
     seat_category:Mapped[str] = mapped_column(String(50), nullable=False, default='empty') # pull from BC
@@ -81,11 +81,15 @@ class Ticket(db.Model):
     @hybrid_property
     def listing_status(self)->Mapped[str]:
         '''Status of ticket\n
-        'Not Listed': Default value if the ticket is not listed on the marketplace\n
-        'Listed': Value when the ticket is currently available for sale on the marketplace
+        'Not Listed': Default value if the ticket is not listed on the marketplace [P1]\n
+        'Listed': Value when the ticket is currently available for sale on the marketplace [P1]\n
+        'Event Ended': Event that the ticket is connected to has ended. Will show regardless of listing [P0]\n
+        Event ended status will always show regardless of listed/not listed
         '''
+        if self.event.status == 'Ended':
+            return 'Event Ended'
         for listing in self.ticket_listing_history:
-            if listing.status == 'Available':
+            if listing.buyer_id is None:
                 return 'Listed'
         return 'Not Listed'
 
@@ -130,8 +134,6 @@ class Ticket_Listing(db.Model):
         else:
             return price_str
         
-
-    
     @hybrid_property
     def real_status(self)->Mapped[str]:
         '''Status of ticket listing.\n
