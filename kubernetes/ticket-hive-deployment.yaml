@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-hive
+  labels:
+    app: ticket-hive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket-hive
+  template:
+    metadata:
+      labels:
+        app: ticket-hive
+    spec:
+      containers:
+      - name: ticket-hive
+        image: wigsicle/ticket-hive:latest  # Replace with your Docker image
+        ports:
+        - containerPort: 5000  # Change this if your application listens on a different port
+        env:
+        - name: DB_USERNAME
+          value: "root"
+        - name: DB_PASSWORD
+          value: "tickethivepass"
+        - name: DB_NAME
+          value: "ticket_hive"
+        - name: DB_HOST
+          value: "mariadb-service"  # Change this to your DB service name if necessary
+        - name: DB_PORT
+          value: "8083"  # Adjust as necessary
+        - name: SECRET_KEY
+          value: "anything"
+        volumeMounts:
+        - name: app-volume
+          mountPath: /app
+      volumes:
+      - name: app-volume
+        emptyDir: {}  # Use a volume to hold the application code and .env file, modify as needed

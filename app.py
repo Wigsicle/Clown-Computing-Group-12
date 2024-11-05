@@ -247,7 +247,7 @@ def listing_details(id):
     return render_template('listing_details.html',event_info=event_info,ticket_info=ticket_info)
 
 # Initialize gRPC channel and stub globally for reuse
-channel = grpc.insecure_channel('localhost:50051')
+channel = grpc.insecure_channel('localhost:8082')
 stub = TicketStub(channel)
 
 # Route for user purchase ticket
@@ -318,7 +318,7 @@ def sell_tickets():
     return render_template('resale_market.html')
 
 # Initialize gRPC channel and stub globally for reuse
-channel = grpc.insecure_channel('localhost:50051')
+channel = grpc.insecure_channel('localhost:8082')
 stub = TicketStub(channel)
 
 @app.route('/search_ticket', methods=['POST'])
@@ -461,4 +461,4 @@ def add_ticket():
         return jsonify({'status': 'error', 'message': 'Invalid JSON response from gRPC service'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
